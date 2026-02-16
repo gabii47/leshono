@@ -106,6 +106,41 @@ function looksSyriac(text) {
   return false;
 }
 
+function stripSyriac(s) {
+  return String(s || '').replace(/[\u0700-\u074F]+/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function normalizeTuroyoNames(s) {
+  // Never show "Surayt" in UI.
+  return String(s || '').replaceAll('Surayt','Turoyo').replaceAll('surayt','turoyo').replaceAll('SURAYT','TUROYO');
+}
+
+function MixedText({ text, style }) {
+  const t = normalizeTuroyoNames(String(text || ''));
+  const parts = t.split(/([\u0700-\u074F][\u0700-\u074F\s]*)/g).filter((p) => p !== '');
+  return (
+    <span style={style}>
+      {parts.map((p, i) =>
+        looksSyriac(p) ? (
+          <span key={i} className="syriac">{p.trim()}</span>
+        ) : (
+          <span key={i}>{p}</span>
+        )
+      )}
+    </span>
+  );
+}
+
+// (kept for compatibility)
+function looksSyriac_legacy(text) {
+  if (!text) return false;
+  for (const ch of String(text)) {
+    const c = ch.codePointAt(0);
+    if (c >= 0x0700 && c <= 0x074f) return true;
+  }
+  return false;
+}
+
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
 }
@@ -1600,8 +1635,17 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
 
   const goalPct = clamp(Math.round((dailyXp / Math.max(1, dailyGoal)) * 100), 0, 100);
   // Bigger "snake" spiral offsets (wider spread)
-  const nodeOffsets = [0, 220, 110, 0, -110, -220, -110, 0, 110];
+  const nodeOffsetsBase = [0, 220, 110, 0, -110, -220, -110, 0, 110];
   const nodeGap = 170;
+  const [vw, setVw] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 390));
+  useEffect(() => {
+    const onR = () => setVw(window.innerWidth);
+    window.addEventListener('resize', onR);
+    return () => window.removeEventListener('resize', onR);
+  }, []);
+  const maxOffset = Math.max(0, Math.floor((vw - 200) / 2));
+  const scale = Math.min(1, maxOffset / 220);
+  const nodeOffsets = nodeOffsetsBase.map((x) => Math.round(x * scale));
 
   const [popupLesson, setPopupLesson] = useState(null);
   const [popupPos, setPopupPos] = useState(null);
@@ -1712,7 +1756,7 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
                 <div style={{ width: 10, height: 10, borderRadius: 999, background: sec.color }} />
                 <div style={{ fontWeight: 900, fontSize: 18 }}>{sec.title}</div>
               </div>
-              <div style={{ fontWeight: 900, opacity: 0.9 }}><Syriac>{sec.syriac}</Syriac></div>
+              <div style={{ fontWeight: 900, opacity: 0.9 }}><MixedText text={sec.syriac} /></div>
             </div>
 
             {sec.units.map((u) => (
@@ -1720,13 +1764,13 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
                 <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 20, background: `${u.color}18`, border: `1px solid ${u.color}33`, fontWeight: 900, marginBottom: 10 }}>
                   <div style={{ width: 10, height: 10, borderRadius: 999, background: u.color }} />
                   <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <div style={{ fontWeight: 900 }}>{u.title}</div>
-                    <div style={{ fontWeight: 900, opacity: 0.75, fontSize: 12 }}><Syriac>{u.syriac}</Syriac> • {u.desc}</div>
+                    <div style={{ fontWeight: 900 }}><MixedText text={stripSyriac(u.title)} /></div>
+                    <div style={{ fontWeight: 900, opacity: 0.75, fontSize: 12 }}><MixedText text={u.syriac} /> • {normalizeTuroyoNames(u.desc)}</div>
                   </div>
                 </div>
 
                 {(() => {
-                  const nodeSize = 96;
+                  const nodeSize = Math.max(84, Math.min(96, Math.floor(vw * 0.24)));
                   const points = u.lessons
                     .map((lessonId, i) => ({
                       lessonId,
@@ -1759,7 +1803,7 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
                       <svg
                         width="100%"
                         height={h}
-                        viewBox={`${-420} 0 ${840} ${h}`}
+                        viewBox={`${-(maxOffset + 260)} 0 ${(maxOffset + 260) * 2} ${h}`}
                         style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'visible' }}
                         aria-hidden="true"
                       >
@@ -1842,7 +1886,7 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
                                 maxWidth: nodeSize + 140,
                               }}
                             >
-                              {item.lesson.title}
+                              {normalizeTuroyoNames(stripSyriac(item.lesson.title))}
                             </div>
 
                             <div
@@ -2147,7 +2191,7 @@ function ProfilePage({ dark, setDark, lang, setLang, user, setUser, xp, streak, 
 }
 
 /* ---------------------------------- App ----------------------------------- */
-const BUILD = 'spiral-3';
+const BUILD = 'mobile-spiral-4';
 
 function parseHash() {
   const h = String(window.location.hash || '').replace(/^#\/?/, '');
