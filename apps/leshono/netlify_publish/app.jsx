@@ -396,6 +396,9 @@ function buildCourseFromScraped(scraped) {
     advanced: { title: 'Advanced', syriac: 'ܥܰܡܝܩܳܐ', color: COLORS.advanced, units: [] },
   };
 
+  // Lessons map must exist before we start creating unit checkpoint lessons.
+  const LESSONS = {};
+
   // For each unitId, collect substages (ids starting with unitId + '.')
   for (const unitId of unitIds) {
     const sub = allIds.filter((id) => id.startsWith(unitId + '.'));
@@ -471,7 +474,6 @@ function buildCourseFromScraped(scraped) {
   }
 
   // Build lesson objects for each sub id.
-  const LESSONS = {};
 
   function takeParagraphs(blocks, limit = 3) {
     const out = [];
