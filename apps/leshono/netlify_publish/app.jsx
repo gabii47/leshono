@@ -1212,7 +1212,7 @@ function ExercisePage({ lesson, dark, unitColor, hearts, setHearts, onDone }) {
   );
 }
 
-function PathView({ dark, flat, idx, done, setDone, streak, xp, hearts, dailyGoal, dailyXp, setPage, startLesson }) {
+function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, dailyGoal, dailyXp, setPage, startLesson }) {
   const bg = dark ? COLORS.bgDark : COLORS.bgLight;
   const fg = dark ? COLORS.fgDark : COLORS.fgLight;
 
@@ -1327,7 +1327,7 @@ function PathView({ dark, flat, idx, done, setDone, streak, xp, hearts, dailyGoa
           </div>
         </Card>
 
-        {Object.values(C).map((sec) => (
+        {['beginner','intermediate','advanced'].map((k) => course[k]).filter(Boolean).map((sec) => (
           <div key={sec.title} style={{ marginBottom: 18 }}>
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -1884,6 +1884,7 @@ function App() {
       {page === "home" ? (
         <PathView
           dark={dark}
+          course={data.course}
           flat={flat}
           idx={idx}
           done={done}
