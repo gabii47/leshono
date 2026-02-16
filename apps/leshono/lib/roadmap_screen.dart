@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'build_info.dart';
 import 'app_settings.dart';
 import 'course_models.dart';
 import 'page_wrapper.dart';
@@ -42,6 +43,14 @@ class RoadmapHome extends StatelessWidget {
                   },
                 ),
                 const Spacer(),
+                Text(
+                  'v$buildId',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: Colors.black.withValues(alpha: 0.45)),
+                ),
+                const SizedBox(width: 10),
                 CircleAvatar(
                   radius: 18,
                   backgroundColor: const Color(0xFFFFD54F),
