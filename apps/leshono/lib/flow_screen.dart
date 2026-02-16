@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'app_settings.dart';
 import 'course_models.dart';
 import 'progress.dart';
-import 'ui_lesson.dart';
+import 'flow_stage_body.dart';
 
 /// Duolingo-like flow: one stage at a time with Continue.
 class FlowScreen extends StatefulWidget {
@@ -75,9 +75,14 @@ class _FlowScreenState extends State<FlowScreen> {
               ),
             ),
             Expanded(
-              child: LessonScreen(
-                lesson: stage,
-                scriptMode: widget.settings.scriptMode,
+              child: StageBody(
+                stage: stage,
+                settings: widget.settings,
+                onDoneExercises: () {
+                  // mark this stage complete and advance
+                  progress.markCompleted(stage.id, xp: 10);
+                  _nextOrExit(context);
+                },
               ),
             ),
             Padding(
