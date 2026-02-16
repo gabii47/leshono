@@ -43,7 +43,7 @@ function useGlobalStyle() {
     el.setAttribute("data-leshono", "1");
     el.textContent = `
 @import url('https://fonts.googleapis.com/css2?family=Questrial&family=Raleway:wght@400;600;800&family=Noto+Sans+Syriac:wght@400;700&display=swap');
-@font-face{font-family:'SertoAntiochBible';src:url('https://cdn.jsdelivr.net/gh/nicosyres/Serto-Fonts@master/SyrCOMAntioch.woff2') format('woff2'),url('https://cdn.jsdelivr.net/gh/nicosyres/Serto-Fonts@master/SyrCOMAntioch.woff') format('woff');font-weight:400;font-style:normal;font-display:swap;}
+@font-face{font-family:'SertoAntiochBible';src:url('./fonts/SertoAntochBible.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap;}
 @keyframes correctPulse { 0%{transform:scale(1)} 55%{transform:scale(1.05)} 100%{transform:scale(1)} }
 @keyframes slideInRight { 0%{transform:translateX(30px); opacity:0} 100%{transform:translateX(0); opacity:1} }
 @keyframes miniConfetti { 0%{transform:translateY(0) rotate(0deg); opacity:1} 100%{transform:translateY(110vh) rotate(720deg); opacity:0.95} }
@@ -172,6 +172,7 @@ function btn3d(shadowHex, { pressY = 3, up = 4, down = 1 } = {}) {
 
   const handlers = {
     onMouseDown: (e) => {
+      try { e.preventDefault(); } catch {}
       e.currentTarget.style.transform = `translateY(${pressY}px)`;
       e.currentTarget.style.boxShadow = downShadow;
     },
@@ -184,6 +185,7 @@ function btn3d(shadowHex, { pressY = 3, up = 4, down = 1 } = {}) {
       e.currentTarget.style.boxShadow = upShadow;
     },
     onTouchStart: (e) => {
+      try { e.preventDefault(); } catch {}
       e.currentTarget.style.transform = `translateY(${pressY}px)`;
       e.currentTarget.style.boxShadow = downShadow;
     },
@@ -1589,7 +1591,9 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
   }, [flat, done]);
 
   const goalPct = clamp(Math.round((dailyXp / Math.max(1, dailyGoal)) * 100), 0, 100);
-  const nodeOffsets = [0, 96, 48, 0, -48, -96, -48, 0, 48];
+  // Bigger "snake" spiral offsets (wider spread)
+  const nodeOffsets = [0, 160, 80, 0, -80, -160, -80, 0, 80];
+  const nodeGap = 140;
 
   const [popupLesson, setPopupLesson] = useState(null);
   const [popupPos, setPopupPos] = useState(null);
@@ -1713,110 +1717,176 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
                   </div>
                 </div>
 
-                <div style={{ position: "relative", paddingTop: 6, paddingBottom: 6 }}>
-                  {u.lessons.map((lessonId, i) => {
-                    const item = flat[idx[lessonId]];
-                    if (!item) return null;
+                {(() => {
+                  const nodeSize = 96;
+                  const points = u.lessons
+                    .map((lessonId, i) => ({
+                      lessonId,
+                      i,
+                      x: nodeOffsets[i % nodeOffsets.length],
+                      y: i * nodeGap,
+                    }))
+                    .filter((p) => flat[idx[p.lessonId]]);
 
-                    const isDone = done.includes(lessonId);
-                    const isUnlocked = unlockedSet.has(lessonId);
-                    const isLocked = !isUnlocked;
+                  const h = (points.length ? points[points.length - 1].y : 0) + nodeGap;
+                  const midX = 0;
 
-                    const offset = nodeOffsets[i % nodeOffsets.length];
-                    const nodeSize = 90;
-                    const tNode = btn3d(`${u.color}99`, { up: 9, down: 3, pressY: 3 });
+                  const d = points
+                    .map((p, i) => {
+                      const x = midX + p.x;
+                      const y = p.y + 40;
+                      if (i === 0) return `M ${x} ${y}`;
+                      const prev = points[i - 1];
+                      const px = midX + prev.x;
+                      const py = prev.y + 40;
+                      const cx = (px + x) / 2;
+                      const cy = (py + y) / 2;
+                      return `Q ${cx} ${cy} ${x} ${y}`;
+                    })
+                    .join(' ');
 
-                    const isCurrent = isUnlocked && !isDone && (i === 0 || done.includes(u.lessons[i - 1]));
+                  return (
+                    <div style={{ position: 'relative', height: h, marginTop: 10, marginBottom: 20 }}>
+                      {/* snake path line behind nodes */}
+                      <svg
+                        width="100%"
+                        height={h}
+                        viewBox={`${-220} 0 ${440} ${h}`}
+                        style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'visible' }}
+                        aria-hidden="true"
+                      >
+                        <path
+                          d={d}
+                          fill="none"
+                          stroke={dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.12)'}
+                          strokeWidth="14"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d={d}
+                          fill="none"
+                          stroke={dark ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.18)'}
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          opacity="0.55"
+                        />
+                      </svg>
 
-                    const bgNode = isDone
-                      ? u.color
-                      : isUnlocked
-                      ? (dark ? "rgba(255,255,255,0.96)" : "#fff")
-                      : (dark ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.12)");
+                      {points.map((p) => {
+                        const item = flat[idx[p.lessonId]];
+                        const lessonId = p.lessonId;
+                        const i = p.i;
 
-                    const nodeBg = isDone
-                      ? bgNode
-                      : isUnlocked
-                      ? `linear-gradient(180deg, ${bgNode}, ${dark ? 'rgba(220,220,220,0.92)' : 'rgba(240,240,240,0.95)'})`
-                      : bgNode;
+                        const isDone = done.includes(lessonId);
+                        const isUnlocked = unlockedSet.has(lessonId);
+                        const isLocked = !isUnlocked;
+                        const isCurrent = isUnlocked && !isDone && (i === 0 || done.includes(u.lessons[i - 1]));
 
-                    const border = isUnlocked
-                      ? `2px solid ${u.color}55`
-                      : `2px solid ${dark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.16)"}`;
+                        const tNode = btn3d(`${u.color}99`, { up: 10, down: 3, pressY: 3 });
 
-                    return (
-                      <div key={lessonId} style={{ position: 'relative', width: '100%', display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 22 }}>
-                        {/* connector line */}
-                        {i > 0 ? (
+                        const bgNode = isDone
+                          ? u.color
+                          : isUnlocked
+                          ? (dark ? "rgba(255,255,255,0.96)" : "#fff")
+                          : (dark ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.12)");
+
+                        const nodeBg = isDone
+                          ? bgNode
+                          : isUnlocked
+                          ? `linear-gradient(180deg, ${bgNode}, ${dark ? 'rgba(220,220,220,0.92)' : 'rgba(240,240,240,0.95)'})`
+                          : bgNode;
+
+                        const border = isUnlocked
+                          ? `2px solid ${u.color}55`
+                          : `2px solid ${dark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.16)"}`;
+
+                        return (
                           <div
+                            key={lessonId}
                             style={{
                               position: 'absolute',
-                              top: -16,
-                              left: '50%',
-                              width: 10,
-                              height: 24,
+                              left: `calc(50% + ${p.x}px)`,
+                              top: p.y,
                               transform: 'translateX(-50%)',
-                              borderRadius: 999,
-                              background: isDone ? `${u.color}88` : (dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'),
-                              boxShadow: `0 3px 0 ${isDone ? `${u.color}99` : (dark ? 'rgba(0,0,0,0.22)' : 'rgba(0,0,0,0.18)')}`,
+                              zIndex: 1,
+                              width: nodeSize + 140,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
                             }}
-                          />
-                        ) : null}
-
-                        <div
-                          style={{
-                            position: 'relative',
-                            left: offset,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            width: nodeSize + 60,
-                          }}
-                        >
-                          <div role="button" tabIndex={0} onClick={(e) => onNodeClick(lessonId, e)} {...tNode} style={{
-                            ...tNode.style,
-                            width: nodeSize,
-                            height: nodeSize,
-                            borderRadius: 999,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            background: nodeBg,
-                            border,
-                            boxShadow: isLocked ? "none" : tNode.style.boxShadow,
-                            cursor: "pointer",
-                            position: "relative",
-                          }}>
-                            <div style={{ fontSize: 24, fontWeight: 900, color: isDone ? "#fff" : "#111" }}>
-                              {isDone ? "✓" : isUnlocked ? "★" : <LockIcon size={20} style={{ opacity: 0.65 }} />}
+                          >
+                            {/* title ABOVE the dot, centered */}
+                            <div
+                              style={{
+                                marginBottom: 10,
+                                fontSize: 12,
+                                fontWeight: 900,
+                                opacity: 0.8,
+                                textAlign: 'center',
+                                maxWidth: nodeSize + 140,
+                              }}
+                            >
+                              {item.lesson.title}
                             </div>
 
-                            {/* current node indicator: single 3D ring, neutral gray fill */}
-                            {isCurrent ? (
-                              <div
-                                style={{
-                                  position: 'absolute',
-                                  inset: -8,
-                                  borderRadius: 999,
-                                  border: `3px solid ${u.color}66`,
-                                  boxShadow: `0 0 0 8px rgba(0,0,0,0.06)`,
-                                }}
-                              />
-                            ) : null}
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={(e) => onNodeClick(lessonId, e)}
+                              {...tNode}
+                              style={{
+                                ...tNode.style,
+                                width: nodeSize,
+                                height: nodeSize,
+                                borderRadius: 999,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: nodeBg,
+                                border,
+                                boxShadow: isLocked ? 'none' : tNode.style.boxShadow,
+                                cursor: 'pointer',
+                                position: 'relative',
+                                outline: 'none',
+                              }}
+                            >
+                              <div style={{ fontSize: 26, fontWeight: 900, color: isDone ? '#fff' : '#111' }}>
+                                {isDone ? '✓' : isUnlocked ? '★' : <LockIcon size={20} style={{ opacity: 0.65 }} />}
+                              </div>
 
-                            {isUnlocked && !isDone ? (
-                              <div style={{ position: "absolute", inset: -6, borderRadius: 999, border: `2px solid ${u.color}55`, boxShadow: `0 0 0 6px ${u.color}22` }} />
-                            ) : null}
-                          </div>
+                              {/* current node indicator */}
+                              {isCurrent ? (
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    inset: -10,
+                                    borderRadius: 999,
+                                    border: `3px solid ${u.color}66`,
+                                    boxShadow: `0 8px 0 ${u.color}33`,
+                                  }}
+                                />
+                              ) : null}
 
-                          <div style={{ marginTop: 8, fontSize: 11, fontWeight: 900, opacity: 0.75, textAlign: 'center', width: nodeSize + 40 }}>
-                            {item.lesson.title}
+                              {isUnlocked && !isDone ? (
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    inset: -7,
+                                    borderRadius: 999,
+                                    border: `2px solid ${u.color}55`,
+                                    boxShadow: `0 0 0 7px ${u.color}1f`,
+                                  }}
+                                />
+                              ) : null}
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             ))}
           </div>
