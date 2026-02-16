@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#58cc02" />
+    <title>Leshono</title>
+    <link rel="icon" href="data:," />
+
+    <!-- React runtime (not a UI library) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <!-- Babel to run JSX without a build step (Netlify build is echo skip) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </head>
+  <body style="margin:0;">
+    <div id="root"></div>
+
+    <!-- Single-file app -->
+    <script type="text/babel" data-presets="react" src="./app.jsx?v=20260216-2358"></script>
+    <script type="text/babel" data-presets="react">
+      // Mount after app.jsx loads
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      const mount = () => {
+        if (window.App) {
+          root.render(React.createElement(window.App));
+          return true;
+        }
+        return false;
+      };
+      if (!mount()) {
+        const t = setInterval(() => {
+          if (mount()) clearInterval(t);
+        }, 30);
+      }
+    </script>
+  </body>
+</html>
