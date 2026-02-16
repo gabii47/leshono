@@ -44,6 +44,10 @@ function useGlobalStyle() {
     el.textContent = `
 @import url('https://fonts.googleapis.com/css2?family=Questrial&family=Raleway:wght@400;600;800&family=Noto+Sans+Syriac:wght@400;700&display=swap');
 @font-face{font-family:'SertoAntiochBible';src:url('./fonts/SertoAntochBible.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap;}
+
+html, body, #root { font-family: 'Questrial','Raleway',-apple-system,'SF Pro Display',system-ui,sans-serif; }
+/* Force Syriac block to always use Serto */
+.syriac { font-family: 'SertoAntiochBible', serif !important; direction: rtl; unicode-bidi: plaintext; font-size: 1.3em; }
 @keyframes correctPulse { 0%{transform:scale(1)} 55%{transform:scale(1.05)} 100%{transform:scale(1)} }
 @keyframes slideInRight { 0%{transform:translateX(30px); opacity:0} 100%{transform:translateX(0); opacity:1} }
 @keyframes miniConfetti { 0%{transform:translateY(0) rotate(0deg); opacity:1} 100%{transform:translateY(110vh) rotate(720deg); opacity:0.95} }
@@ -208,12 +212,14 @@ function Syriac({ children, style }) {
   const isSy = looksSyriac(t);
   return (
     <span
+      className={isSy ? 'syriac' : undefined}
       style={{
         ...(isSy
           ? {
+              fontFamily: SYR_FONT,
+              // keep in style too, but class enforces it via !important
               direction: "rtl",
               unicodeBidi: "plaintext",
-              fontFamily: SYR_FONT, // ALWAYS Serto for Syriac
               fontSize: "1.3em",
             }
           : {}),
@@ -2135,7 +2141,7 @@ function ProfilePage({ dark, setDark, lang, setLang, user, setUser, xp, streak, 
 }
 
 /* ---------------------------------- App ----------------------------------- */
-const BUILD = 'spiral-2';
+const BUILD = 'spiral-3';
 
 function parseHash() {
   const h = String(window.location.hash || '').replace(/^#\/?/, '');
