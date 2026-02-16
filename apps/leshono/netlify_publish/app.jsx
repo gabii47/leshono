@@ -415,8 +415,26 @@ function buildCourseFromScraped(scraped) {
     const maybeSy = titleParts.find((t) => looksSyriac(t));
     if (maybeSy) syriac = maybeSy;
 
-    const unit = mkUnit(`unit:${unitId}`, titleParts[0] || unitTitle, syriac, unitColor, desc || 'Practice with short steps', sub);
+    const unitLessonId = `unit:${unitId}`;
+
+    // Unit-first path: add a unit checkpoint lesson as the first node.
+    const unit = mkUnit(unitLessonId, titleParts[0] || unitTitle, syriac, unitColor, desc || 'Practice with short steps', [unitLessonId, ...sub]);
     course[tierId].units.push(unit);
+
+    // Create a unit checkpoint lesson using the unit container page (if any)
+    const unitParas = takeParagraphs(unitPage?.blocks || [], 3);
+    const unitVocab = extractVocabRows(unitPage?.blocks || []);
+    LESSONS[unitLessonId] = {
+      id: unitLessonId,
+      title: titleParts[0] || unitTitle,
+      xp: 10,
+      intro: {
+        title: titleParts[0] || unitTitle,
+        desc: unitParas.join(' '),
+        vocab: unitVocab.slice(0, 20),
+      },
+      ex: generateExercisesFromVocab(unitVocab, 6),
+    };
   }
 
   // Build lesson objects for each sub id.
