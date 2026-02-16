@@ -470,6 +470,8 @@ function buildCourseFromScraped(scraped) {
           return null;
         })
         .filter(Boolean)
+        // Skip textbook meta section 1.0 (preface/credits/etc). Start at 1.1 Alphabet.
+        .filter((uid) => uid !== '1.0')
     )
   );
 
@@ -1592,8 +1594,8 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
 
   const goalPct = clamp(Math.round((dailyXp / Math.max(1, dailyGoal)) * 100), 0, 100);
   // Bigger "snake" spiral offsets (wider spread)
-  const nodeOffsets = [0, 160, 80, 0, -80, -160, -80, 0, 80];
-  const nodeGap = 140;
+  const nodeOffsets = [0, 220, 110, 0, -110, -220, -110, 0, 110];
+  const nodeGap = 170;
 
   const [popupLesson, setPopupLesson] = useState(null);
   const [popupPos, setPopupPos] = useState(null);
@@ -1751,23 +1753,23 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
                       <svg
                         width="100%"
                         height={h}
-                        viewBox={`${-220} 0 ${440} ${h}`}
+                        viewBox={`${-420} 0 ${840} ${h}`}
                         style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'visible' }}
                         aria-hidden="true"
                       >
                         <path
                           d={d}
                           fill="none"
-                          stroke={dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.12)'}
-                          strokeWidth="14"
+                          stroke={dark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.10)'}
+                          strokeWidth="18"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         />
                         <path
                           d={d}
                           fill="none"
-                          stroke={dark ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.18)'}
-                          strokeWidth="8"
+                          stroke={dark ? 'rgba(0,0,0,0.22)' : 'rgba(0,0,0,0.16)'}
+                          strokeWidth="10"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           opacity="0.55"
@@ -2133,7 +2135,7 @@ function ProfilePage({ dark, setDark, lang, setLang, user, setUser, xp, streak, 
 }
 
 /* ---------------------------------- App ----------------------------------- */
-const BUILD = 'hash-router-1';
+const BUILD = 'spiral-2';
 
 function parseHash() {
   const h = String(window.location.hash || '').replace(/^#\/?/, '');
