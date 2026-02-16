@@ -56,7 +56,8 @@ function useGlobalStyle() {
 
 /* -------------------------------- constants -------------------------------- */
 const UI_FONT = "'Questrial','Raleway',-apple-system,'SF Pro Display',system-ui,sans-serif";
-const SYR_FONT = "'SertoAntiochBible','Noto Sans Syriac',serif";
+// Syriac must render in Serto.
+const SYR_FONT = "'SertoAntiochBible',serif";
 
 const COLORS = {
   bgLight: "#fff",
@@ -500,6 +501,25 @@ function buildCourseFromScraped(scraped) {
     // Unit checkpoint lesson using the unit container page (if any)
     const unitParas = takeParagraphs(unitPage?.blocks || [], 3);
     const unitVocab = extractVocabRows(unitPage?.blocks || []);
+
+    // If unit container has no vocab (common), pull from substages.
+    const unitVocabAll = [];
+    const unitAlphaAll = [];
+    for (const sid of sub) {
+      const sp = lessonsById.get(sid);
+      if (!sp) continue;
+      unitVocabAll.push(...extractVocabRows(sp.blocks || []));
+      unitAlphaAll.push(...extractAlphabetRows(sp.blocks || []));
+    }
+
+    const isAlphabetUnit = /alphabet|olafbe/i.test(String(titleParts[0] || unitTitle));
+
+    const introVocab = (unitVocab.length ? unitVocab : unitVocabAll).slice(0, 20);
+
+    const unitExercises = isAlphabetUnit && unitAlphaAll.length
+      ? generateAlphabetExercises(unitAlphaAll, 14)
+      : generateExercisesFromVocab(unitVocab.length ? unitVocab : unitVocabAll, 10);
+
     LESSONS[unitLessonId] = {
       id: unitLessonId,
       title: `${titleParts[0] || unitTitle} — Unit`,
@@ -507,19 +527,13 @@ function buildCourseFromScraped(scraped) {
       intro: {
         title: titleParts[0] || unitTitle,
         desc: unitParas.join(' '),
-        vocab: unitVocab.slice(0, 20),
+        vocab: introVocab,
         grammar: 'You will learn, then practice, then review.',
       },
-      ex: generateExercisesFromVocab(unitVocab, 8),
+      ex: unitExercises,
     };
 
     // Review checkpoint: build from vocab across the unit substages
-    const unitVocabAll = [];
-    for (const sid of sub) {
-      const sp = lessonsById.get(sid);
-      if (!sp) continue;
-      unitVocabAll.push(...extractVocabRows(sp.blocks || []));
-    }
     LESSONS[reviewLessonId] = {
       id: reviewLessonId,
       title: `${titleParts[0] || unitTitle} — Review`,
@@ -529,7 +543,9 @@ function buildCourseFromScraped(scraped) {
         desc: 'Quick review to lock in what you learned in this unit.',
         vocab: unitVocabAll.slice(0, 20),
       },
-      ex: generateExercisesFromVocab(unitVocabAll, 14),
+      ex: (isAlphabetUnit && unitAlphaAll.length)
+        ? generateAlphabetExercises(unitAlphaAll, 16)
+        : generateExercisesFromVocab(unitVocabAll, 16),
     };
   }
 
@@ -545,6 +561,41 @@ function buildCourseFromScraped(scraped) {
       if (/video-?clip|watch this video|listen to/i.test(t)) continue;
       out.push(t);
       if (out.length >= limit) break;
+    }
+    return out;
+  }
+
+  function extractAlphabetRows(blocks) {
+    // Rows like: [Name, Sound (value), Letter]
+    const out = [];
+    let seenHeader = false;
+    for (const b of blocks || []) {
+      if (b.type !== 'table_row') continue;
+      const cells = Array.isArray(b.cells) ? b.cells : [];
+      const c = cells.map((x) => String(x || '').trim()).filter(Boolean);
+      if (c.length < 3) continue;
+
+      const a = c[0];
+      const s = c[1];
+      const l = c[2];
+
+      if (!seenHeader) {
+        if (a.toLowerCase() === 'name' && s.toLowerCase().includes('sound') && (l.toLowerCase() === 'letter' || looksSyriac(l))) {
+          seenHeader = true;
+          continue;
+        }
+      }
+
+      // Letter cell should look Syriac and be short
+      if (!looksSyriac(l)) continue;
+      if (l.length > 6) continue;
+      if (!a) continue;
+
+      // Skip obvious noise
+      if (a.toLowerCase() === 'surayt in syriac script') continue;
+
+      out.push({ name: a, sound: s, letter: l });
+      if (out.length >= 40) break;
     }
     return out;
   }
@@ -581,69 +632,126 @@ function buildCourseFromScraped(scraped) {
     });
   }
 
+  function generateAlphabetExercises(alphaRows, count = 14) {
+    const rows = (alphaRows || []).filter((r) => r.name && r.letter);
+    if (!rows.length) return [];
+
+    const out = [];
+
+    // Match name -> letter (core)
+    const pairs = rows.slice(0, 8).map((r) => [r.name, r.letter]);
+    if (pairs.length >= 3) out.push({ type: 'match', pairs: pairs.slice(0, 6) });
+
+    // Select: pick the letter for a name
+    for (const r of rows) {
+      if (out.length >= count) break;
+      const opts = [r.letter];
+      while (opts.length < 4 && opts.length < rows.length) {
+        const cand = rows[Math.floor(Math.random() * rows.length)].letter;
+        if (!opts.includes(cand)) opts.push(cand);
+      }
+      out.push({ type: 'select', q: `Select the Syriac letter for: ${r.name}${r.sound && r.sound !== '-' ? ` (${r.sound})` : ''}`, options: shuffle(opts), a: r.letter });
+    }
+
+    // Type: type the latin name for a letter
+    for (const r of rows) {
+      if (out.length >= count) break;
+      out.push({ type: 'type', q: `Type the letter name for: ${r.letter}`, a: r.name, al: [r.name] });
+    }
+
+    // True/False variety
+    for (const r of rows) {
+      if (out.length >= count) break;
+      const wrong = rows[Math.floor(Math.random() * rows.length)];
+      const isTrue = Math.random() < 0.6;
+      const shown = isTrue ? r.letter : wrong.letter;
+      out.push({ type: 'truefalse', q: `${r.name} is written as ${shown}.`, a: isTrue ? true : shown === r.letter });
+    }
+
+    return out.slice(0, count);
+  }
+
   function generateExercisesFromVocab(vocab, count = 12) {
-    // Mix of exercise types derived from vocab rows.
+    // Mix of exercise types derived from vocab rows, with repetition control.
     const items = vocab.filter((v) => v[0] && v[1]);
     const poolLatin = items.map((v) => v[0]);
     const poolMeaning = items.map((v) => v[1]);
 
+    if (!items.length) return [];
+
     const out = [];
+    const take = items.slice(0, Math.min(items.length, 18));
 
-    const take = items.slice(0, Math.max(8, Math.min(items.length, count)));
+    const push = (e) => {
+      if (out.length < count) out.push(e);
+    };
 
-    // 1) select: meaning -> choose latin
-    for (const v of take) {
+    // Always start with one match when we can (variety boost)
+    const syPairs = take
+      .filter((v) => v[2] && looksSyriac(v[2]))
+      .slice(0, 8)
+      .map((v) => [v[0], v[2]]);
+    if (syPairs.length >= 3) push({ type: 'match', pairs: syPairs.slice(0, 6) });
+
+    // Then rotate through types without spamming the same prompt.
+    const rotated = shuffle(take);
+
+    for (const v of rotated) {
       if (out.length >= count) break;
+      const [latin, meaning] = v;
+
+      // select
+      if (out.filter((x) => x.type === 'select').length < 3) {
+        const opts = [latin];
+        while (opts.length < 4 && opts.length < poolLatin.length) {
+          const cand = poolLatin[Math.floor(Math.random() * poolLatin.length)];
+          if (!opts.includes(cand)) opts.push(cand);
+        }
+        push({ type: 'select', q: `Choose the Turoyo word for: "${meaning}"`, options: shuffle(opts), a: latin, al: [latin] });
+        continue;
+      }
+
+      // type
+      if (out.filter((x) => x.type === 'type').length < 3) {
+        push({ type: 'type', q: `Type the Turoyo word for: "${meaning}"`, a: latin, al: [latin] });
+        continue;
+      }
+
+      // fill
+      if (out.filter((x) => x.type === 'fill').length < 2) {
+        push({ type: 'fill', q: `Fill the blank: ___ = ${meaning}`, a: latin, al: [latin] });
+        continue;
+      }
+
+      // true/false
+      if (out.filter((x) => x.type === 'truefalse').length < 3) {
+        const wrongMeaning = poolMeaning[Math.floor(Math.random() * poolMeaning.length)] || meaning;
+        const isTrue = Math.random() < 0.6;
+        const shownMeaning = isTrue ? meaning : wrongMeaning;
+        const a = isTrue ? true : shownMeaning === meaning;
+        push({ type: 'truefalse', q: `"${latin}" means "${shownMeaning}".`, a });
+        continue;
+      }
+
+      // arrange
+      if (out.filter((x) => x.type === 'arrange').length < 2) {
+        const bank = shuffle([latin, '=', ...String(meaning).split(/\s+/).filter(Boolean)]);
+        const ans = [latin, '=', ...String(meaning).split(/\s+/).filter(Boolean)].join(' ');
+        push({ type: 'arrange', q: 'Arrange:', bank, a: ans, al: [ans] });
+        continue;
+      }
+    }
+
+    // Backfill with select if still short
+    while (out.length < count && take.length) {
+      const v = take[Math.floor(Math.random() * take.length)];
       const [latin, meaning] = v;
       const opts = [latin];
       while (opts.length < 4 && opts.length < poolLatin.length) {
         const cand = poolLatin[Math.floor(Math.random() * poolLatin.length)];
         if (!opts.includes(cand)) opts.push(cand);
       }
-      out.push({ type: 'select', q: `Choose the Turoyo word for: "${meaning}"`, options: shuffle(opts), a: latin, al: [latin] });
-    }
-
-    // 2) type: meaning -> type latin
-    for (const v of take) {
-      if (out.length >= count) break;
-      const [latin, meaning] = v;
-      out.push({ type: 'type', q: `Type the Turoyo word for: "${meaning}"`, a: latin, al: [latin] });
-    }
-
-    // 3) fill: ___ = meaning
-    for (const v of take) {
-      if (out.length >= count) break;
-      const [latin, meaning] = v;
-      out.push({ type: 'fill', q: `Fill the blank: ___ = ${meaning}`, a: latin, al: [latin] });
-    }
-
-    // 4) true/false: "latin means meaning"
-    for (const v of take) {
-      if (out.length >= count) break;
-      const [latin, meaning] = v;
-      const wrongMeaning = poolMeaning[Math.floor(Math.random() * poolMeaning.length)] || meaning;
-      const isTrue = Math.random() < 0.6;
-      const shownMeaning = isTrue ? meaning : wrongMeaning;
-      const a = isTrue ? true : shownMeaning === meaning;
-      out.push({ type: 'truefalse', q: `"${latin}" means "${shownMeaning}".`, a });
-    }
-
-    // 5) match: latin <-> syriac (if we have enough)
-    const syPairs = items
-      .filter((v) => v[2] && looksSyriac(v[2]))
-      .slice(0, 6)
-      .map((v) => [v[0], v[2]]);
-    if (syPairs.length >= 3 && out.length < count) {
-      out.push({ type: 'match', pairs: syPairs });
-    }
-
-    // 6) arrange: build "latin = meaning" from word bank
-    for (const v of take) {
-      if (out.length >= count) break;
-      const [latin, meaning] = v;
-      const bank = shuffle([latin, '=', ...String(meaning).split(/\s+/).filter(Boolean)]);
-      const ans = [latin, '=', ...String(meaning).split(/\s+/).filter(Boolean)].join(' ');
-      out.push({ type: 'arrange', q: 'Arrange:', bank, a: ans, al: [ans] });
+      push({ type: 'select', q: `Choose the Turoyo word for: "${meaning}"`, options: shuffle(opts), a: latin, al: [latin] });
     }
 
     return out.slice(0, count);
