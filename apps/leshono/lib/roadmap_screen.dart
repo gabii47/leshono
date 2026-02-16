@@ -81,7 +81,9 @@ class RoadmapHome extends StatelessWidget {
                     // For unit pages (e.g., 1.1 / 1.2) start a Duolingo-like flow.
                     if (children.isNotEmpty && page.id.split('.').length == 2) {
                       children.sort((a, b) => a.id.compareTo(b.id));
-                      final stages = <Lesson>[page, ...children];
+                      // Duolingo-style: don't show the unit container page itself as a stage.
+                      // Start directly with the first subpage (intro/content), then exercises/vocab etc.
+                      final stages = <Lesson>[...children];
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => FlowScreen(

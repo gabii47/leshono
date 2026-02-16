@@ -69,6 +69,15 @@ class _FlowScreenState extends State<FlowScreen> {
                       const Text('XP', style: TextStyle(fontWeight: FontWeight.w800)),
                       const SizedBox(width: 6),
                       Text(progress.totalXp.toString(), style: const TextStyle(fontWeight: FontWeight.w700)),
+                      const SizedBox(width: 12),
+                      Text(
+                        // build stamp (helps debug caching)
+                        'v4536a65+',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: Colors.black.withValues(alpha: 0.35)),
+                      ),
                     ],
                   ),
                 ],
