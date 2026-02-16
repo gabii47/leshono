@@ -1658,7 +1658,7 @@ function App() {
     let alive = true;
     (async () => {
       try {
-        const res = await fetch('./data/course.json', { cache: 'no-store' });
+        const res = await fetch('./data/course_min.json', { cache: 'no-store' });
         const scraped = await res.json();
         const built = buildCourseFromScraped(scraped);
         if (!alive) return;
