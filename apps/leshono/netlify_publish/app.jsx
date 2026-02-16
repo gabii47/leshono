@@ -1749,7 +1749,7 @@ function ProfilePage({ dark, setDark, lang, setLang, user, setUser, xp, streak, 
 }
 
 /* ---------------------------------- App ----------------------------------- */
-const BUILD = '5171da9+';
+const BUILD = '07ed728';
 
 function App() {
   useGlobalStyle();
