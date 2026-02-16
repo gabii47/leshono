@@ -56,6 +56,7 @@ function useGlobalStyle() {
 
 /* -------------------------------- constants -------------------------------- */
 const UI_FONT = "'Questrial','Raleway',-apple-system,'SF Pro Display',system-ui,sans-serif";
+const UI_FONT_STACK = "'Questrial','Raleway',-apple-system,'SF Pro Display',system-ui,sans-serif";
 // Syriac must render in Serto.
 const SYR_FONT = "'SertoAntiochBible',serif";
 
@@ -223,7 +224,7 @@ function Syriac({ children, style }) {
 }
 
 function AramMascot({ size = 72, style }) {
-  // Simple inline SVG mascot (red/yellow cute eagle). No external images.
+  // Cute red/yellow eagle head + wings. No external images.
   return (
     <svg
       width={size}
@@ -233,50 +234,50 @@ function AramMascot({ size = 72, style }) {
       aria-hidden="true"
     >
       <defs>
-        <linearGradient id="aramBody" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#ff6b4a" />
-          <stop offset="1" stopColor="#e23a2e" />
+        <linearGradient id="aramRed" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ff5a4a" />
+          <stop offset="1" stopColor="#d91f1f" />
         </linearGradient>
-        <linearGradient id="aramWing" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#ffd54a" />
+        <linearGradient id="aramGold" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#ffe45c" />
           <stop offset="1" stopColor="#ff9f1c" />
         </linearGradient>
       </defs>
 
-      {/* soft shadow */}
-      <ellipse cx="64" cy="114" rx="34" ry="10" fill="rgba(0,0,0,0.12)" />
+      {/* shadow */}
+      <ellipse cx="64" cy="112" rx="34" ry="10" fill="rgba(0,0,0,0.12)" />
 
-      {/* body */}
-      <path
-        d="M64 24c22 0 40 16 40 38 0 30-18 52-40 52S24 92 24 62c0-22 18-38 40-38z"
-        fill="url(#aramBody)"
-      />
+      {/* wings behind */}
+      <path d="M22 74c-10-8-12-22-2-32 14 4 26 14 30 28-8 6-18 8-28 4z" fill="url(#aramGold)" />
+      <path d="M106 74c10-8 12-22 2-32-14 4-26 14-30 28 8 6 18 8 28 4z" fill="url(#aramGold)" />
 
-      {/* belly */}
-      <path
-        d="M64 44c14 0 26 12 26 26 0 18-10 34-26 34S38 88 38 70c0-14 12-26 26-26z"
-        fill="rgba(255,255,255,0.22)"
-      />
+      {/* head */}
+      <circle cx="64" cy="64" r="44" fill="url(#aramRed)" />
+      <circle cx="64" cy="68" r="34" fill="rgba(255,255,255,0.14)" />
 
-      {/* wings */}
-      <path d="M22 70c-10-6-14-18-6-28 10 4 18 12 22 22-6 4-10 6-16 6z" fill="url(#aramWing)" />
-      <path d="M106 70c10-6 14-18 6-28-10 4-18 12-22 22 6 4 10 6 16 6z" fill="url(#aramWing)" />
+      {/* cheek feathers */}
+      <path d="M30 72c8 10 16 16 24 18-10 4-24 0-30-10 0-4 2-6 6-8z" fill="rgba(255,255,255,0.10)" />
+      <path d="M98 72c-8 10-16 16-24 18 10 4 24 0 30-10 0-4-2-6-6-8z" fill="rgba(255,255,255,0.10)" />
 
-      {/* face */}
-      <circle cx="50" cy="58" r="8" fill="#fff" />
-      <circle cx="78" cy="58" r="8" fill="#fff" />
-      <circle cx="52" cy="60" r="4" fill="#2b2b2b" />
-      <circle cx="80" cy="60" r="4" fill="#2b2b2b" />
-      <circle cx="54" cy="58" r="1.6" fill="#fff" />
-      <circle cx="82" cy="58" r="1.6" fill="#fff" />
+      {/* eyes */}
+      <ellipse cx="48" cy="60" rx="12" ry="14" fill="#fff" />
+      <ellipse cx="80" cy="60" rx="12" ry="14" fill="#fff" />
+      <circle cx="50" cy="63" r="6" fill="#232323" />
+      <circle cx="82" cy="63" r="6" fill="#232323" />
+      <circle cx="52" cy="60" r="2.4" fill="#fff" />
+      <circle cx="84" cy="60" r="2.4" fill="#fff" />
 
-      {/* beak */}
-      <path d="M64 66c10 0 18 4 18 10 0 8-10 14-18 14s-18-6-18-14c0-6 8-10 18-10z" fill="#ffd54a" />
-      <path d="M64 74c6 0 10 2 10 5 0 4-6 7-10 7s-10-3-10-7c0-3 4-5 10-5z" fill="#ff9f1c" opacity="0.9" />
+      {/* beak (more eagle-like) */}
+      <path d="M64 70c18 0 34 10 34 22 0 10-12 18-34 18s-34-8-34-18c0-12 16-22 34-22z" fill="url(#aramGold)" />
+      <path d="M64 78c10 0 18 4 18 10 0 6-8 10-18 10s-18-4-18-10c0-6 8-10 18-10z" fill="#ffb84a" opacity="0.9" />
+      <path d="M80 86c-6 10-18 16-32 16" stroke="rgba(0,0,0,0.20)" strokeWidth="5" strokeLinecap="round" fill="none" />
 
       {/* brows */}
-      <path d="M42 48c6-6 14-8 20-6" stroke="rgba(0,0,0,0.25)" strokeWidth="5" strokeLinecap="round" fill="none" />
-      <path d="M86 48c-6-6-14-8-20-6" stroke="rgba(0,0,0,0.25)" strokeWidth="5" strokeLinecap="round" fill="none" />
+      <path d="M36 46c10-10 22-12 32-8" stroke="rgba(0,0,0,0.22)" strokeWidth="7" strokeLinecap="round" fill="none" />
+      <path d="M92 46c-10-10-22-12-32-8" stroke="rgba(0,0,0,0.22)" strokeWidth="7" strokeLinecap="round" fill="none" />
+
+      {/* tiny crest */}
+      <path d="M54 24c4-10 16-14 26-10-6 4-10 10-10 18-6-6-10-8-16-8z" fill="rgba(255,255,255,0.14)" />
     </svg>
   );
 }
@@ -1137,13 +1138,14 @@ function VocabGrid({ rows, dark }) {
 function LessonIntro({ lesson, dark, onStart }) {
   const intro = lesson.intro || {};
   const tStart = btn3d(COLORS.accentShadow);
+  const title = intro.title || lesson.title;
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
-        <div style={{ fontWeight: 900, opacity: 0.75 }}>Aram</div>
+        <div style={{ fontWeight: 900, opacity: 0.85 }}> </div>
         <AramMascot size={64} />
       </div>
-      <div style={{ fontWeight: 900, fontSize: 20, marginBottom: 8 }}><Syriac>{intro.title || lesson.title}</Syriac></div>
+      <div style={{ fontWeight: 900, fontSize: 20, marginBottom: 8 }}><Syriac>{title}</Syriac></div>
       {intro.desc ? <div style={{ fontWeight: 900, opacity: 0.75, lineHeight: 1.35, marginBottom: 12 }}><Syriac>{intro.desc}</Syriac></div> : null}
 
       {Array.isArray(intro.dialog) && intro.dialog.length ? (
@@ -2234,7 +2236,7 @@ function App() {
   const fg = dark ? COLORS.fgDark : COLORS.fgLight;
 
   return (
-    <div style={{ minHeight: "100vh", background: bg, color: fg, fontFamily: UI_FONT }}>
+    <div style={{ minHeight: "100vh", background: bg, color: fg, fontFamily: UI_FONT_STACK, fontSize: 16, lineHeight: 1.35 }}>
       {topChrome}
 
       {page === "welcome" ? (
@@ -2289,7 +2291,7 @@ function App() {
       {page === "lesson" && activeItem ? (
         <div style={{ padding: 16, paddingBottom: 92 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
-            <div style={{ fontWeight: 900, fontSize: 18 }}>{activeItem.lesson.title}</div>
+            <div style={{ fontWeight: 900, fontSize: 18, opacity: 0.0 }} aria-hidden="true"> </div>
             <Pill bg={dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.06)"} fg={dark ? COLORS.fgDark : COLORS.fgLight}>❤️ {hearts}</Pill>
           </div>
 
