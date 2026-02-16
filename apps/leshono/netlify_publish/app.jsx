@@ -1761,9 +1761,9 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
 
       <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, padding: 12, background: dark ? "rgba(26,26,46,0.92)" : "rgba(255,255,255,0.92)", borderTop: "1px solid rgba(0,0,0,0.08)", backdropFilter: "blur(8px)", zIndex: 65 }}>
         <div style={{ display: "flex", justifyContent: "space-around", alignItems: "center" }}>
-          <IconBtn icon="🏠" active={true} dark={dark} onClick={() => setPage("home")} />
-          <IconBtn icon="🎯" active={false} dark={dark} onClick={() => setPage("goals")} />
-          <IconBtn icon="👤" active={false} dark={dark} onClick={() => setPage("profile")} />
+          <IconBtn icon="🏠" active={true} dark={dark} onClick={() => navTo('home')} />
+          <IconBtn icon="🎯" active={false} dark={dark} onClick={() => navTo('goals')} />
+          <IconBtn icon="👤" active={false} dark={dark} onClick={() => navTo('profile')} />
         </div>
       </div>
     </div>
@@ -1853,9 +1853,9 @@ function GoalsPage({ dark, dailyGoal, dailyXp, setDailyGoal, streak, setPage }) 
 
       <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, padding: 12, background: dark ? "rgba(26,26,46,0.92)" : "rgba(255,255,255,0.92)", borderTop: "1px solid rgba(0,0,0,0.08)", backdropFilter: "blur(8px)", zIndex: 65 }}>
         <div style={{ display: "flex", justifyContent: "space-around", alignItems: "center" }}>
-          <IconBtn icon="🏠" active={false} dark={dark} onClick={() => setPage("home")} />
-          <IconBtn icon="🎯" active={true} dark={dark} onClick={() => setPage("goals")} />
-          <IconBtn icon="👤" active={false} dark={dark} onClick={() => setPage("profile")} />
+          <IconBtn icon="🏠" active={false} dark={dark} onClick={() => navTo('home')} />
+          <IconBtn icon="🎯" active={true} dark={dark} onClick={() => navTo('goals')} />
+          <IconBtn icon="👤" active={false} dark={dark} onClick={() => navTo('profile')} />
         </div>
       </div>
     </div>
@@ -1986,9 +1986,9 @@ function ProfilePage({ dark, setDark, lang, setLang, user, setUser, xp, streak, 
 
       <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, padding: 12, background: dark ? "rgba(26,26,46,0.92)" : "rgba(255,255,255,0.92)", borderTop: "1px solid rgba(0,0,0,0.08)", backdropFilter: "blur(8px)", zIndex: 65 }}>
         <div style={{ display: "flex", justifyContent: "space-around", alignItems: "center" }}>
-          <IconBtn icon="🏠" active={false} dark={dark} onClick={() => setPage("home")} />
-          <IconBtn icon="🎯" active={false} dark={dark} onClick={() => setPage("goals")} />
-          <IconBtn icon="👤" active={true} dark={dark} onClick={() => setPage("profile")} />
+          <IconBtn icon="🏠" active={false} dark={dark} onClick={() => navTo('home')} />
+          <IconBtn icon="🎯" active={false} dark={dark} onClick={() => navTo('goals')} />
+          <IconBtn icon="👤" active={true} dark={dark} onClick={() => navTo('profile')} />
         </div>
       </div>
     </div>
@@ -1996,7 +1996,29 @@ function ProfilePage({ dark, setDark, lang, setLang, user, setUser, xp, streak, 
 }
 
 /* ---------------------------------- App ----------------------------------- */
-const BUILD = 'alphabet-start-1';
+const BUILD = 'hash-router-1';
+
+function parseHash() {
+  const h = String(window.location.hash || '').replace(/^#\/?/, '');
+  const parts = h.split('/').filter(Boolean);
+  if (!parts.length) return { page: 'welcome' };
+
+  const [head, ...rest] = parts;
+  if (head === 'home') return { page: 'home' };
+  if (head === 'onboarding') return { page: 'onboarding' };
+  if (head === 'auth') return { page: 'auth' };
+  if (head === 'goals') return { page: 'goals' };
+  if (head === 'profile') return { page: 'profile' };
+  if (head === 'lesson' && rest[0]) return { page: 'lesson', lessonId: decodeURIComponent(rest[0]) };
+  if (head === 'exercise' && rest[0]) return { page: 'exercise', lessonId: decodeURIComponent(rest[0]) };
+  if (head === 'complete' && rest[0]) return { page: 'complete', lessonId: decodeURIComponent(rest[0]) };
+  return { page: 'welcome' };
+}
+
+function navTo(path) {
+  const next = path.startsWith('#') ? path : `#/${String(path).replace(/^\/?/, '')}`;
+  if (window.location.hash !== next) window.location.hash = next;
+}
 
 function App() {
   useGlobalStyle();
@@ -2031,7 +2053,8 @@ function App() {
   const [lang, setLang] = useState("en");
   const [user, setUser] = useState(null);
 
-  const [page, setPage] = useState("welcome");
+  const [route, setRoute] = useState(() => parseHash());
+  const [page, setPage] = useState(route.page || "welcome");
   const [authMode, setAuthMode] = useState("login");
 
   const [xp, setXp] = useState(0);
@@ -2045,7 +2068,21 @@ function App() {
   const [dailyXp, setDailyXp] = useState(0);
   const [lastDay, setLastDay] = useState(todayKey());
 
-  const [activeLessonId, setActiveLessonId] = useState(null);
+  const [activeLessonId, setActiveLessonId] = useState(route.lessonId || null);
+
+  // Hash router: sync route -> state
+  useEffect(() => {
+    const onHash = () => {
+      const r = parseHash();
+      setRoute(r);
+      setPage(r.page || 'welcome');
+      if (r.lessonId) setActiveLessonId(r.lessonId);
+    };
+    window.addEventListener('hashchange', onHash);
+    // initialize
+    onHash();
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
 
   // persisted state
   useEffect(() => {
@@ -2083,13 +2120,17 @@ function App() {
   const startLesson = (lessonId) => {
     setActiveLessonId(lessonId);
     setHearts(5);
-    setPage("lesson");
+    navTo(`lesson/${encodeURIComponent(lessonId)}`);
   };
 
   // If data loaded and no active lesson selected yet, pick the first lesson.
   useEffect(() => {
     if (!activeLessonId && flat.length) {
       setActiveLessonId(flat[0].lesson.id);
+      // keep URL coherent
+      if (page === 'lesson' || page === 'exercise' || page === 'complete') {
+        navTo(`lesson/${encodeURIComponent(flat[0].lesson.id)}`);
+      }
     }
   }, [activeLessonId, flat.length]);
 
@@ -2130,7 +2171,7 @@ function App() {
 
   const logout = () => {
     setUser(null);
-    setPage("welcome");
+    navTo('');
   };
 
   const completeLesson = () => {
@@ -2150,9 +2191,9 @@ function App() {
     if (next) {
       setActiveLessonId(next);
       setHearts(5);
-      setPage("lesson");
+      navTo(`lesson/${encodeURIComponent(next)}`);
     } else {
-      setPage("home");
+      navTo('home');
     }
   };
 
@@ -2201,8 +2242,8 @@ function App() {
           dark={dark}
           lang={lang}
           setLang={setLang}
-          onGetStarted={() => setPage("onboarding")}
-          onLogin={() => setPage("auth")}
+          onGetStarted={() => navTo('onboarding')}
+          onLogin={() => navTo('auth')}
         />
       ) : null}
 
@@ -2213,7 +2254,7 @@ function App() {
           setMode={setAuthMode}
           onAuthed={(u) => {
             setUser(u);
-            setPage("onboarding");
+            navTo('onboarding');
           }}
         />
       ) : null}
@@ -2223,7 +2264,7 @@ function App() {
           dark={dark}
           dailyGoal={dailyGoal}
           setDailyGoal={setDailyGoal}
-          onDone={() => setPage("home")}
+          onDone={() => navTo('home')}
         />
       ) : null}
 
@@ -2240,7 +2281,7 @@ function App() {
           hearts={hearts}
           dailyGoal={dailyGoal}
           dailyXp={dailyXp}
-          setPage={setPage}
+          setPage={(p) => navTo(p)}
           startLesson={startLesson}
         />
       ) : null}
@@ -2255,11 +2296,11 @@ function App() {
           <LessonIntro
             lesson={activeItem.lesson}
             dark={dark}
-            onStart={() => setPage("exercise")}
+            onStart={() => navTo(`exercise/${encodeURIComponent(activeItem.lesson.id)}`)}
           />
 
           <div style={{ position: "fixed", left: 20, right: 20, bottom: 20, zIndex: 60, display: "flex", gap: 10 }}>
-            <div role="button" tabIndex={0} onClick={() => setPage("home")} {...btn3d("rgba(0,0,0,0.14)")} style={{
+            <div role="button" tabIndex={0} onClick={() => navTo('home')} {...btn3d("rgba(0,0,0,0.14)")} style={{
               ...btn3d("rgba(0,0,0,0.14)").style,
               flex: 1,
               borderRadius: 18,
@@ -2270,7 +2311,7 @@ function App() {
               border: "1px solid rgba(0,0,0,0.12)",
               color: dark ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.70)",
             }}>Back</div>
-            <div role="button" tabIndex={0} onClick={() => setPage("exercise")} {...btn3d(COLORS.accentShadow)} style={{
+            <div role="button" tabIndex={0} onClick={() => navTo(`exercise/${encodeURIComponent(activeItem.lesson.id)}`)} {...btn3d(COLORS.accentShadow)} style={{
               ...btn3d(COLORS.accentShadow).style,
               flex: 1,
               borderRadius: 18,
@@ -2297,9 +2338,9 @@ function App() {
             unitColor={unitColor}
             hearts={hearts}
             setHearts={setHearts}
-            onExit={() => setPage("home")}
+            onExit={() => navTo('home')}
             onDone={() => {
-              setPage("complete");
+              navTo(`complete/${encodeURIComponent(activeItem.lesson.id)}`);
             }}
           />
         </div>
@@ -2315,7 +2356,7 @@ function App() {
               <Pill bg="rgba(28,176,246,0.14)" fg={COLORS.info}>XP {activeItem.lesson.xp || 10}</Pill>
               <Pill bg={dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.06)"} fg={dark ? COLORS.fgDark : COLORS.fgLight}>❤️ {hearts}</Pill>
             </div>
-            <div role="button" tabIndex={0} onClick={() => { completeLesson(); setPage("home"); }} {...btn3d(COLORS.accentShadow)} style={{
+            <div role="button" tabIndex={0} onClick={() => { completeLesson(); navTo('home'); }} {...btn3d(COLORS.accentShadow)} style={{
               ...btn3d(COLORS.accentShadow).style,
               background: COLORS.accent,
               color: "#0b2a00",
@@ -2335,7 +2376,7 @@ function App() {
           dailyXp={dailyXp}
           setDailyGoal={setDailyGoal}
           streak={streak}
-          setPage={setPage}
+          setPage={(p) => navTo(p)}
         />
       ) : null}
 
@@ -2353,7 +2394,7 @@ function App() {
           perSectionProgress={perSectionProgress}
           resetAll={resetAll}
           logout={logout}
-          setPage={setPage}
+          setPage={(p) => navTo(p)}
         />
       ) : null}
     </div>
