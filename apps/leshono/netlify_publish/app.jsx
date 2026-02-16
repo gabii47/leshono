@@ -1806,8 +1806,14 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
                           ? `linear-gradient(180deg, ${bgNode}, ${dark ? 'rgba(220,220,220,0.92)' : 'rgba(240,240,240,0.95)'})`
                           : bgNode;
 
-                        const border = isUnlocked
-                          ? `2px solid ${u.color}55`
+                        // Unlocked nodes should not turn bright green on hover.
+                        // Keep them neutral; only current/completed use section color strongly.
+                        const border = isDone
+                          ? `2px solid ${u.color}66`
+                          : isCurrent
+                          ? `3px solid ${u.color}66`
+                          : isUnlocked
+                          ? `2px solid ${dark ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.14)"}`
                           : `2px solid ${dark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.16)"}`;
 
                         return (
@@ -1877,14 +1883,14 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
                                 />
                               ) : null}
 
-                              {isUnlocked && !isDone ? (
+                              {isUnlocked && !isDone && !isCurrent ? (
                                 <div
                                   style={{
                                     position: 'absolute',
                                     inset: -7,
                                     borderRadius: 999,
-                                    border: `2px solid ${u.color}55`,
-                                    boxShadow: `0 0 0 7px ${u.color}1f`,
+                                    border: `2px solid ${dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.10)'}`,
+                                    boxShadow: `0 0 0 7px ${dark ? 'rgba(0,0,0,0.16)' : 'rgba(0,0,0,0.06)'}`,
                                   }}
                                 />
                               ) : null}
