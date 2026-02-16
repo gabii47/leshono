@@ -60,6 +60,7 @@ const SYR_FONT = "'SertoAntiochBible','Noto Sans Syriac',serif";
 
 const COLORS = {
   bgLight: "#fff",
+  // dim, not black
   bgDark: "#1a1a2e",
   fgLight: "#333",
   fgDark: "#e0e0e0",
@@ -208,7 +209,7 @@ function Syriac({ children, style }) {
           ? {
               direction: "rtl",
               unicodeBidi: "plaintext",
-              fontFamily: SYR_FONT,
+              fontFamily: SYR_FONT, // ALWAYS Serto for Syriac
               fontSize: "1.3em",
             }
           : {}),
@@ -217,6 +218,65 @@ function Syriac({ children, style }) {
     >
       {t}
     </span>
+  );
+}
+
+function AramMascot({ size = 72, style }) {
+  // Simple inline SVG mascot (red/yellow cute eagle). No external images.
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 128 128"
+      style={{ display: 'block', ...style }}
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="aramBody" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ff6b4a" />
+          <stop offset="1" stopColor="#e23a2e" />
+        </linearGradient>
+        <linearGradient id="aramWing" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#ffd54a" />
+          <stop offset="1" stopColor="#ff9f1c" />
+        </linearGradient>
+      </defs>
+
+      {/* soft shadow */}
+      <ellipse cx="64" cy="114" rx="34" ry="10" fill="rgba(0,0,0,0.12)" />
+
+      {/* body */}
+      <path
+        d="M64 24c22 0 40 16 40 38 0 30-18 52-40 52S24 92 24 62c0-22 18-38 40-38z"
+        fill="url(#aramBody)"
+      />
+
+      {/* belly */}
+      <path
+        d="M64 44c14 0 26 12 26 26 0 18-10 34-26 34S38 88 38 70c0-14 12-26 26-26z"
+        fill="rgba(255,255,255,0.22)"
+      />
+
+      {/* wings */}
+      <path d="M22 70c-10-6-14-18-6-28 10 4 18 12 22 22-6 4-10 6-16 6z" fill="url(#aramWing)" />
+      <path d="M106 70c10-6 14-18 6-28-10 4-18 12-22 22 6 4 10 6 16 6z" fill="url(#aramWing)" />
+
+      {/* face */}
+      <circle cx="50" cy="58" r="8" fill="#fff" />
+      <circle cx="78" cy="58" r="8" fill="#fff" />
+      <circle cx="52" cy="60" r="4" fill="#2b2b2b" />
+      <circle cx="80" cy="60" r="4" fill="#2b2b2b" />
+      <circle cx="54" cy="58" r="1.6" fill="#fff" />
+      <circle cx="82" cy="58" r="1.6" fill="#fff" />
+
+      {/* beak */}
+      <path d="M64 66c10 0 18 4 18 10 0 8-10 14-18 14s-18-6-18-14c0-6 8-10 18-10z" fill="#ffd54a" />
+      <path d="M64 74c6 0 10 2 10 5 0 4-6 7-10 7s-10-3-10-7c0-3 4-5 10-5z" fill="#ff9f1c" opacity="0.9" />
+
+      {/* brows */}
+      <path d="M42 48c6-6 14-8 20-6" stroke="rgba(0,0,0,0.25)" strokeWidth="5" strokeLinecap="round" fill="none" />
+      <path d="M86 48c-6-6-14-8-20-6" stroke="rgba(0,0,0,0.25)" strokeWidth="5" strokeLinecap="round" fill="none" />
+    </svg>
   );
 }
 
@@ -932,6 +992,10 @@ function LessonIntro({ lesson, dark, onStart }) {
   const tStart = btn3d(COLORS.accentShadow);
   return (
     <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
+        <div style={{ fontWeight: 900, opacity: 0.75 }}>Aram</div>
+        <AramMascot size={64} />
+      </div>
       <div style={{ fontWeight: 900, fontSize: 20, marginBottom: 8 }}><Syriac>{intro.title || lesson.title}</Syriac></div>
       {intro.desc ? <div style={{ fontWeight: 900, opacity: 0.75, lineHeight: 1.35, marginBottom: 12 }}><Syriac>{intro.desc}</Syriac></div> : null}
 
@@ -983,7 +1047,7 @@ function LessonIntro({ lesson, dark, onStart }) {
   );
 }
 
-function ExercisePage({ lesson, dark, unitColor, hearts, setHearts, onDone }) {
+function ExercisePage({ lesson, dark, unitColor, hearts, setHearts, onDone, onExit }) {
   const exList = lesson.ex || [];
   const [exIdx, setExIdx] = useState(0);
   const [fb, setFb] = useState(null);
@@ -1097,8 +1161,38 @@ function ExercisePage({ lesson, dark, unitColor, hearts, setHearts, onDone }) {
 
   const option3d = btn3d("#d0d0d0", { up: 4, down: 1, pressY: 3 });
 
+  const skipExercise = () => {
+    const next = exIdx + 1;
+    if (next < exList.length) setExIdx(next);
+    else onDone();
+  };
+
   return (
     <div style={{ position: "relative", paddingBottom: ex.type === "match" ? 24 : 92 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
+        <div role="button" tabIndex={0} onClick={onExit} {...btn3d("rgba(0,0,0,0.14)")} style={{
+          ...btn3d("rgba(0,0,0,0.14)").style,
+          padding: '10px 12px',
+          borderRadius: 18,
+          background: dark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.06)',
+          border: '1px solid rgba(0,0,0,0.10)',
+          fontWeight: 900,
+          minWidth: 44,
+          textAlign: 'center'
+        }}>✕</div>
+        <div style={{ fontWeight: 900, opacity: 0.75 }}>Exercise {exIdx + 1}/{exList.length}</div>
+        <div role="button" tabIndex={0} onClick={skipExercise} {...btn3d("#d0d0d0")} style={{
+          ...btn3d("#d0d0d0").style,
+          padding: '10px 12px',
+          borderRadius: 18,
+          background: 'transparent',
+          border: `2px solid ${dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.18)'}`,
+          boxShadow: 'none',
+          fontWeight: 900,
+          minWidth: 72,
+          textAlign: 'center'
+        }}>Skip</div>
+      </div>
       {fb?.ok ? <Confetti seedKey={confKey} accent={unitColor} anim="miniConfetti" /> : null}
 
       <Card dark={dark}>
@@ -1325,7 +1419,7 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
   }, [flat, done]);
 
   const goalPct = clamp(Math.round((dailyXp / Math.max(1, dailyGoal)) * 100), 0, 100);
-  const nodeOffsets = [0, 60, 0, -60];
+  const nodeOffsets = [0, 72, 0, -72];
 
   const [popupLesson, setPopupLesson] = useState(null);
   const [popupPos, setPopupPos] = useState(null);
@@ -1459,14 +1553,20 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
                     const isLocked = !isUnlocked;
 
                     const offset = nodeOffsets[i % nodeOffsets.length];
-                    const nodeSize = 64;
-                    const tNode = btn3d(`${u.color}99`, { up: 6, down: 2, pressY: 3 });
+                    const nodeSize = 78;
+                    const tNode = btn3d(`${u.color}99`, { up: 8, down: 3, pressY: 3 });
 
                     const bgNode = isDone
                       ? u.color
                       : isUnlocked
                       ? (dark ? "rgba(255,255,255,0.96)" : "#fff")
                       : (dark ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.12)");
+
+                    const nodeBg = isDone
+                      ? bgNode
+                      : isUnlocked
+                      ? `linear-gradient(180deg, ${bgNode}, ${dark ? 'rgba(220,220,220,0.92)' : 'rgba(240,240,240,0.95)'})`
+                      : bgNode;
 
                     const border = isUnlocked
                       ? `2px solid ${u.color}55`
@@ -1482,7 +1582,7 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          background: bgNode,
+                          background: nodeBg,
                           border,
                           transform: `translateX(${offset}px)`,
                           boxShadow: isLocked ? "none" : tNode.style.boxShadow,
@@ -1749,7 +1849,7 @@ function ProfilePage({ dark, setDark, lang, setLang, user, setUser, xp, streak, 
 }
 
 /* ---------------------------------- App ----------------------------------- */
-const BUILD = '07ed728';
+const BUILD = 'aram-ui-1';
 
 function App() {
   useGlobalStyle();
@@ -1913,16 +2013,8 @@ function App() {
     <div style={{ position: "sticky", top: 0, zIndex: 55, background: bg, borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
       <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ fontWeight: 900 }}>Leshono <span style={{ fontWeight: 900, opacity: 0.45, fontSize: 12 }}>v{BUILD}</span></div>
-        <div role="button" tabIndex={0} onClick={() => setDark((d) => !d)} {...btn3d("#d0d0d0")} style={{
-          ...btn3d("#d0d0d0").style,
-          padding: "10px 12px",
-          borderRadius: 18,
-          background: dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)",
-          border: "1px solid rgba(0,0,0,0.12)",
-          fontWeight: 900,
-          minWidth: 52,
-          textAlign: "center",
-        }}>{dark ? "☾" : "☀︎"}</div>
+        {/* dark mode toggle moved to Profile (per spec) */}
+        <div style={{ fontWeight: 900, opacity: 0.55, fontSize: 12 }}> </div>
       </div>
     </div>
   ) : null;
@@ -1951,8 +2043,10 @@ function App() {
     );
   }
 
+  const fg = dark ? COLORS.fgDark : COLORS.fgLight;
+
   return (
-    <div style={{ minHeight: "100vh", background: bg, fontFamily: UI_FONT }}>
+    <div style={{ minHeight: "100vh", background: bg, color: fg, fontFamily: UI_FONT }}>
       {topChrome}
 
       {page === "welcome" ? (
@@ -2056,6 +2150,7 @@ function App() {
             unitColor={unitColor}
             hearts={hearts}
             setHearts={setHearts}
+            onExit={() => setPage("home")}
             onDone={() => {
               setPage("complete");
             }}
