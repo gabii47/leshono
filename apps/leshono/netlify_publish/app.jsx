@@ -1566,6 +1566,8 @@ function ProfilePage({ dark, setDark, lang, setLang, user, setUser, xp, streak, 
 }
 
 /* ---------------------------------- App ----------------------------------- */
+const BUILD = '3a64e7e';
+
 function App() {
   useGlobalStyle();
 
@@ -1693,7 +1695,7 @@ function App() {
   const topChrome = page !== "welcome" ? (
     <div style={{ position: "sticky", top: 0, zIndex: 55, background: bg, borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
       <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ fontWeight: 900 }}>Leshono</div>
+        <div style={{ fontWeight: 900 }}>Leshono <span style={{ fontWeight: 900, opacity: 0.45, fontSize: 12 }}>v{BUILD}</span></div>
         <div role="button" tabIndex={0} onClick={() => setDark((d) => !d)} {...btn3d("#d0d0d0")} style={{
           ...btn3d("#d0d0d0").style,
           padding: "10px 12px",
