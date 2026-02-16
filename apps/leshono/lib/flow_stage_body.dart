@@ -5,7 +5,7 @@ import 'course_models.dart';
 import 'exercise_generator.dart';
 import 'exercise_generator_alphabet.dart';
 import 'exercise_screen.dart';
-import 'ui_lesson.dart';
+import 'ui_lesson_view.dart';
 
 class StageBody extends StatelessWidget {
   final Lesson stage;
@@ -48,6 +48,6 @@ class StageBody extends StatelessWidget {
     }
 
     // Otherwise show the lesson text.
-    return LessonScreen(lesson: stage, scriptMode: settings.scriptMode);
+    return LessonView(lesson: stage, scriptMode: settings.scriptMode);
   }
 }
