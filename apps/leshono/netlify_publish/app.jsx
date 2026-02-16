@@ -43,7 +43,7 @@ function useGlobalStyle() {
     el.setAttribute("data-leshono", "1");
     el.textContent = `
 @import url('https://fonts.googleapis.com/css2?family=Questrial&family=Raleway:wght@400;600;800&family=Noto+Sans+Syriac:wght@400;700&display=swap');
-@font-face{font-family:'SertoAntiochBible';src:url('https://cdn.jsdelivr.net/gh/nicosyres/Serto-Fonts@master/SyrCOMAntioch.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap;}
+@font-face{font-family:'SertoAntiochBible';src:url('https://cdn.jsdelivr.net/gh/nicosyres/Serto-Fonts@master/SyrCOMAntioch.woff2') format('woff2'),url('https://cdn.jsdelivr.net/gh/nicosyres/Serto-Fonts@master/SyrCOMAntioch.woff') format('woff');font-weight:400;font-style:normal;font-display:swap;}
 @keyframes correctPulse { 0%{transform:scale(1)} 55%{transform:scale(1.05)} 100%{transform:scale(1)} }
 @keyframes slideInRight { 0%{transform:translateX(30px); opacity:0} 100%{transform:translateX(0); opacity:1} }
 @keyframes miniConfetti { 0%{transform:translateY(0) rotate(0deg); opacity:1} 100%{transform:translateY(110vh) rotate(720deg); opacity:0.95} }
@@ -488,13 +488,24 @@ function buildCourseFromScraped(scraped) {
     const reviewLessonId = `review:${unitId}`;
 
     // Unit-first path: start with a unit checkpoint, then substages, then a review checkpoint.
+    // For alphabet units: drop pure-intro substages (like "One language, two alphabets") so we start at letters.
+    const subFiltered = (/alphabet|olafbe/i.test(String(titleParts[0] || unitTitle)))
+      ? sub.filter((sid) => {
+          const sp = lessonsById.get(sid);
+          if (!sp) return true;
+          const hasAlpha = extractAlphabetRows(sp.blocks || []).length > 0;
+          const hasVocab = extractVocabRows(sp.blocks || []).length > 0;
+          return hasAlpha || hasVocab;
+        })
+      : sub;
+
     const unit = mkUnit(
       unitLessonId,
       titleParts[0] || unitTitle,
       syriac,
       unitColor,
       desc || 'Practice with short steps',
-      [unitLessonId, ...sub, reviewLessonId]
+      [unitLessonId, ...subFiltered, reviewLessonId]
     );
     course[tierId].units.push(unit);
 
@@ -502,7 +513,7 @@ function buildCourseFromScraped(scraped) {
     const unitParas = takeParagraphs(unitPage?.blocks || [], 3);
     const unitVocab = extractVocabRows(unitPage?.blocks || []);
 
-    // If unit container has no vocab (common), pull from substages.
+    // Pull from substages.
     const unitVocabAll = [];
     const unitAlphaAll = [];
     for (const sid of sub) {
@@ -514,7 +525,15 @@ function buildCourseFromScraped(scraped) {
 
     const isAlphabetUnit = /alphabet|olafbe/i.test(String(titleParts[0] || unitTitle));
 
-    const introVocab = (unitVocab.length ? unitVocab : unitVocabAll).slice(0, 20);
+    // If Alphabet unit: prefer alphabet table for the intro + drills.
+    const introVocab = isAlphabetUnit && unitAlphaAll.length
+      ? unitAlphaAll.slice(0, 20).map((r) => [r.name, (r.sound && r.sound !== '-' ? r.sound : 'letter'), r.letter])
+      : (unitVocab.length ? unitVocab : unitVocabAll).slice(0, 20);
+
+    // Give a student-friendly plan even if unit page text is weak.
+    const friendlyDesc = isAlphabetUnit
+      ? 'In this unit you will learn the Syriac letters (Serto script) and practice recognizing and matching them.'
+      : (unitParas.join(' ') || 'In this unit you will learn key words and practice them with short exercises.');
 
     const unitExercises = isAlphabetUnit && unitAlphaAll.length
       ? generateAlphabetExercises(unitAlphaAll, 14)
@@ -526,9 +545,9 @@ function buildCourseFromScraped(scraped) {
       xp: 10,
       intro: {
         title: titleParts[0] || unitTitle,
-        desc: unitParas.join(' '),
+        desc: friendlyDesc,
         vocab: introVocab,
-        grammar: 'You will learn, then practice, then review.',
+        grammar: 'Learn → Practice → Review',
       },
       ex: unitExercises,
     };
@@ -541,7 +560,9 @@ function buildCourseFromScraped(scraped) {
       intro: {
         title: 'Review',
         desc: 'Quick review to lock in what you learned in this unit.',
-        vocab: unitVocabAll.slice(0, 20),
+        vocab: isAlphabetUnit && unitAlphaAll.length
+          ? unitAlphaAll.slice(0, 20).map((r) => [r.name, (r.sound && r.sound !== '-' ? r.sound : 'letter'), r.letter])
+          : unitVocabAll.slice(0, 20),
       },
       ex: (isAlphabetUnit && unitAlphaAll.length)
         ? generateAlphabetExercises(unitAlphaAll, 16)
@@ -769,13 +790,31 @@ function buildCourseFromScraped(scraped) {
     const paras = takeParagraphs(blocks, 3);
     const vocab = extractVocabRows(blocks);
 
+    const alpha = extractAlphabetRows(blocks);
+    const isAlphaPage = alpha.length >= 6;
+
     const intro = {
       title: String(title).split('|')[0].trim(),
-      desc: paras.join(' '),
-      vocab: vocab.slice(0, 20),
+      desc: (paras.join(' ') || (isAlphaPage ? 'Learn these letters, then practice matching and recognizing them.' : 'Learn the key points, then practice.')),
+      vocab: isAlphaPage
+        ? alpha.slice(0, 20).map((r) => [r.name, (r.sound && r.sound !== '-' ? r.sound : 'letter'), r.letter])
+        : vocab.slice(0, 20),
     };
 
-    const ex = generateExercisesFromVocab(vocab, 10);
+    // Generate exercises even for non-vocab pages when possible.
+    let ex = [];
+    if (isAlphaPage) {
+      ex = generateAlphabetExercises(alpha, 14);
+    } else if (vocab.length) {
+      ex = generateExercisesFromVocab(vocab, 10);
+    } else if (paras.length) {
+      // Paragraph-only lessons: small comprehension set.
+      ex = [
+        { type: 'truefalse', q: 'This lesson uses both Syriac script and Latin transliteration.', a: true },
+        { type: 'select', q: 'Which script is read right-to-left?', options: shuffle(['Syriac', 'Latin', 'English', 'Swedish']), a: 'Syriac' },
+        { type: 'truefalse', q: 'Latin transliteration is read right-to-left.', a: false },
+      ];
+    }
 
     LESSONS[id] = {
       id,
@@ -1957,7 +1996,7 @@ function ProfilePage({ dark, setDark, lang, setLang, user, setUser, xp, streak, 
 }
 
 /* ---------------------------------- App ----------------------------------- */
-const BUILD = 'aram-ui-1';
+const BUILD = 'alphabet-start-1';
 
 function App() {
   useGlobalStyle();
