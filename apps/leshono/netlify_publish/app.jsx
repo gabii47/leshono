@@ -360,9 +360,12 @@ function cmpId(a, b) {
 function tierForLessonId(id) {
   const nums = parseIdToNums(id);
   const major = nums[0] ?? 1;
-  // Expandable: 1–2 beginner, 3 intermediate, 4–5 advanced.
-  if (major <= 2) return 'beginner';
-  if (major === 3) return 'intermediate';
+  // More levels (still rendered as sections):
+  // 1 => Beginner A, 2 => Beginner B, 3 => Intermediate A, 4 => Intermediate B, 5+ => Advanced
+  if (major === 1) return 'beginnerA';
+  if (major === 2) return 'beginnerB';
+  if (major === 3) return 'intermediateA';
+  if (major === 4) return 'intermediateB';
   return 'advanced';
 }
 
@@ -386,8 +389,10 @@ function buildCourseFromScraped(scraped) {
   );
 
   const course = {
-    beginner: { title: 'Beginner', syriac: 'ܡܫܪܝܐ', color: COLORS.beginner, units: [] },
-    intermediate: { title: 'Intermediate', syriac: 'ܡܶܨܥܳܝܐ', color: COLORS.intermediate, units: [] },
+    beginnerA: { title: 'Beginner A', syriac: 'ܡܫܪܝܐ', color: COLORS.beginner, units: [] },
+    beginnerB: { title: 'Beginner B', syriac: 'ܡܫܪܝܐ', color: COLORS.beginner, units: [] },
+    intermediateA: { title: 'Intermediate A', syriac: 'ܡܶܨܥܳܝܐ', color: COLORS.intermediate, units: [] },
+    intermediateB: { title: 'Intermediate B', syriac: 'ܡܶܨܥܳܝܐ', color: COLORS.intermediate, units: [] },
     advanced: { title: 'Advanced', syriac: 'ܥܰܡܝܩܳܐ', color: COLORS.advanced, units: [] },
   };
 
@@ -416,24 +421,52 @@ function buildCourseFromScraped(scraped) {
     if (maybeSy) syriac = maybeSy;
 
     const unitLessonId = `unit:${unitId}`;
+    const reviewLessonId = `review:${unitId}`;
 
-    // Unit-first path: add a unit checkpoint lesson as the first node.
-    const unit = mkUnit(unitLessonId, titleParts[0] || unitTitle, syriac, unitColor, desc || 'Practice with short steps', [unitLessonId, ...sub]);
+    // Unit-first path: start with a unit checkpoint, then substages, then a review checkpoint.
+    const unit = mkUnit(
+      unitLessonId,
+      titleParts[0] || unitTitle,
+      syriac,
+      unitColor,
+      desc || 'Practice with short steps',
+      [unitLessonId, ...sub, reviewLessonId]
+    );
     course[tierId].units.push(unit);
 
-    // Create a unit checkpoint lesson using the unit container page (if any)
+    // Unit checkpoint lesson using the unit container page (if any)
     const unitParas = takeParagraphs(unitPage?.blocks || [], 3);
     const unitVocab = extractVocabRows(unitPage?.blocks || []);
     LESSONS[unitLessonId] = {
       id: unitLessonId,
-      title: titleParts[0] || unitTitle,
+      title: `${titleParts[0] || unitTitle} — Unit`,
       xp: 10,
       intro: {
         title: titleParts[0] || unitTitle,
         desc: unitParas.join(' '),
         vocab: unitVocab.slice(0, 20),
+        grammar: 'You will learn, then practice, then review.',
       },
-      ex: generateExercisesFromVocab(unitVocab, 6),
+      ex: generateExercisesFromVocab(unitVocab, 8),
+    };
+
+    // Review checkpoint: build from vocab across the unit substages
+    const unitVocabAll = [];
+    for (const sid of sub) {
+      const sp = lessonsById.get(sid);
+      if (!sp) continue;
+      unitVocabAll.push(...extractVocabRows(sp.blocks || []));
+    }
+    LESSONS[reviewLessonId] = {
+      id: reviewLessonId,
+      title: `${titleParts[0] || unitTitle} — Review`,
+      xp: 15,
+      intro: {
+        title: 'Review',
+        desc: 'Quick review to lock in what you learned in this unit.',
+        vocab: unitVocabAll.slice(0, 20),
+      },
+      ex: generateExercisesFromVocab(unitVocabAll, 14),
     };
   }
 
@@ -486,26 +519,72 @@ function buildCourseFromScraped(scraped) {
     });
   }
 
-  function generateExercisesFromVocab(vocab, count = 8) {
-    // select exercises: prompt meaning -> choose latin
+  function generateExercisesFromVocab(vocab, count = 12) {
+    // Mix of exercise types derived from vocab rows.
     const items = vocab.filter((v) => v[0] && v[1]);
-    const pool = items.map((v) => v[0]);
-    const ex = [];
-    const used = new Set();
-    for (const v of items) {
-      if (ex.length >= count) break;
-      const latin = v[0];
-      const meaning = v[1];
-      if (used.has(latin)) continue;
-      used.add(latin);
+    const poolLatin = items.map((v) => v[0]);
+    const poolMeaning = items.map((v) => v[1]);
+
+    const out = [];
+
+    const take = items.slice(0, Math.max(8, Math.min(items.length, count)));
+
+    // 1) select: meaning -> choose latin
+    for (const v of take) {
+      if (out.length >= count) break;
+      const [latin, meaning] = v;
       const opts = [latin];
-      while (opts.length < 4 && opts.length < pool.length) {
-        const cand = pool[Math.floor(Math.random() * pool.length)];
+      while (opts.length < 4 && opts.length < poolLatin.length) {
+        const cand = poolLatin[Math.floor(Math.random() * poolLatin.length)];
         if (!opts.includes(cand)) opts.push(cand);
       }
-      ex.push({ type: 'select', q: `Choose the Turoyo word for: "${meaning}"`, options: shuffle(opts), a: latin, al: [latin] });
+      out.push({ type: 'select', q: `Choose the Turoyo word for: "${meaning}"`, options: shuffle(opts), a: latin, al: [latin] });
     }
-    return ex;
+
+    // 2) type: meaning -> type latin
+    for (const v of take) {
+      if (out.length >= count) break;
+      const [latin, meaning] = v;
+      out.push({ type: 'type', q: `Type the Turoyo word for: "${meaning}"`, a: latin, al: [latin] });
+    }
+
+    // 3) fill: ___ = meaning
+    for (const v of take) {
+      if (out.length >= count) break;
+      const [latin, meaning] = v;
+      out.push({ type: 'fill', q: `Fill the blank: ___ = ${meaning}`, a: latin, al: [latin] });
+    }
+
+    // 4) true/false: "latin means meaning"
+    for (const v of take) {
+      if (out.length >= count) break;
+      const [latin, meaning] = v;
+      const wrongMeaning = poolMeaning[Math.floor(Math.random() * poolMeaning.length)] || meaning;
+      const isTrue = Math.random() < 0.6;
+      const shownMeaning = isTrue ? meaning : wrongMeaning;
+      const a = isTrue ? true : shownMeaning === meaning;
+      out.push({ type: 'truefalse', q: `"${latin}" means "${shownMeaning}".`, a });
+    }
+
+    // 5) match: latin <-> syriac (if we have enough)
+    const syPairs = items
+      .filter((v) => v[2] && looksSyriac(v[2]))
+      .slice(0, 6)
+      .map((v) => [v[0], v[2]]);
+    if (syPairs.length >= 3 && out.length < count) {
+      out.push({ type: 'match', pairs: syPairs });
+    }
+
+    // 6) arrange: build "latin = meaning" from word bank
+    for (const v of take) {
+      if (out.length >= count) break;
+      const [latin, meaning] = v;
+      const bank = shuffle([latin, '=', ...String(meaning).split(/\s+/).filter(Boolean)]);
+      const ans = [latin, '=', ...String(meaning).split(/\s+/).filter(Boolean)].join(' ');
+      out.push({ type: 'arrange', q: 'Arrange:', bank, a: ans, al: [ans] });
+    }
+
+    return out.slice(0, count);
   }
 
   for (const id of allIds) {
@@ -541,7 +620,7 @@ function buildCourseFromScraped(scraped) {
 }
 
 function flattenCourse(course, LESSONS) {
-  const tiers = ["beginner", "intermediate", "advanced"];
+  const tiers = ["beginnerA", "beginnerB", "intermediateA", "intermediateB", "advanced"];
   const flat = [];
   const idx = {};
   for (const tierId of tiers) {
@@ -1345,7 +1424,10 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
           </div>
         </Card>
 
-        {['beginner','intermediate','advanced'].map((k) => course[k]).filter(Boolean).map((sec) => (
+        {['beginnerA','beginnerB','intermediateA','intermediateB','advanced']
+          .map((k) => course[k])
+          .filter(Boolean)
+          .map((sec) => (
           <div key={sec.title} style={{ marginBottom: 18 }}>
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -1665,7 +1747,7 @@ function ProfilePage({ dark, setDark, lang, setLang, user, setUser, xp, streak, 
 }
 
 /* ---------------------------------- App ----------------------------------- */
-const BUILD = '3a64e7e';
+const BUILD = '5171da9+';
 
 function App() {
   useGlobalStyle();
@@ -1767,11 +1849,14 @@ function App() {
 
   const perSectionProgress = useMemo(() => {
     const counts = {
-      beginner: { total: 0, done: 0, color: COLORS.beginner, title: "Beginner" },
-      intermediate: { total: 0, done: 0, color: COLORS.intermediate, title: "Intermediate" },
+      beginnerA: { total: 0, done: 0, color: COLORS.beginner, title: "Beginner A" },
+      beginnerB: { total: 0, done: 0, color: COLORS.beginner, title: "Beginner B" },
+      intermediateA: { total: 0, done: 0, color: COLORS.intermediate, title: "Intermediate A" },
+      intermediateB: { total: 0, done: 0, color: COLORS.intermediate, title: "Intermediate B" },
       advanced: { total: 0, done: 0, color: COLORS.advanced, title: "Advanced" },
     };
     flat.forEach((it) => {
+      if (!counts[it.tierId]) return;
       counts[it.tierId].total += 1;
       if (done.includes(it.lesson.id)) counts[it.tierId].done += 1;
     });
