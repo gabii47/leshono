@@ -19,6 +19,13 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   int? selected;
   bool checked = false;
 
+  bool _looksSyriac(String s) {
+    for (final r in s.runes) {
+      if (r >= 0x0700 && r <= 0x074F) return true;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = context.watch<ProgressModel>();
@@ -73,7 +80,15 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                         width: 2,
                       ),
                     ),
-                    child: Text(opt, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                    child: Text(
+                      opt,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: _looksSyriac(opt) ? 'SertoAntochBible' : null,
+                      ),
+                    ),
                   ),
                 ),
               );

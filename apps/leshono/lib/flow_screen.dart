@@ -77,6 +77,7 @@ class _FlowScreenState extends State<FlowScreen> {
             Expanded(
               child: StageBody(
                 stage: stage,
+                allStages: widget.stages,
                 settings: widget.settings,
                 onDoneExercises: () {
                   // mark this stage complete and advance
