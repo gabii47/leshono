@@ -306,6 +306,27 @@ function Pill({ children, bg, fg }) {
   );
 }
 
+function LockIcon({ size = 18, style }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={{ display: 'block', ...style }}>
+      <path
+        d="M7 10V8a5 5 0 0 1 10 0v2"
+        fill="none"
+        stroke="rgba(0,0,0,0.45)"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M6.5 10h11A2.5 2.5 0 0 1 20 12.5v6A2.5 2.5 0 0 1 17.5 21h-11A2.5 2.5 0 0 1 4 18.5v-6A2.5 2.5 0 0 1 6.5 10Z"
+        fill="rgba(0,0,0,0.12)"
+        stroke="rgba(0,0,0,0.25)"
+        strokeWidth="1"
+      />
+      <circle cx="12" cy="15" r="1.7" fill="rgba(0,0,0,0.45)" />
+    </svg>
+  );
+}
+
 function IconBtn({ icon, active, onClick, dark }) {
   const t = btn3d(dark ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.14)", { up: 3, down: 1, pressY: 2 });
   return (
@@ -1568,7 +1589,7 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
   }, [flat, done]);
 
   const goalPct = clamp(Math.round((dailyXp / Math.max(1, dailyGoal)) * 100), 0, 100);
-  const nodeOffsets = [0, 72, 0, -72];
+  const nodeOffsets = [0, 96, 48, 0, -48, -96, -48, 0, 48];
 
   const [popupLesson, setPopupLesson] = useState(null);
   const [popupPos, setPopupPos] = useState(null);
@@ -1702,8 +1723,10 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
                     const isLocked = !isUnlocked;
 
                     const offset = nodeOffsets[i % nodeOffsets.length];
-                    const nodeSize = 78;
-                    const tNode = btn3d(`${u.color}99`, { up: 8, down: 3, pressY: 3 });
+                    const nodeSize = 90;
+                    const tNode = btn3d(`${u.color}99`, { up: 9, down: 3, pressY: 3 });
+
+                    const isCurrent = isUnlocked && !isDone && (i === 0 || done.includes(u.lessons[i - 1]));
 
                     const bgNode = isDone
                       ? u.color
@@ -1722,32 +1745,74 @@ function PathView({ dark, course, flat, idx, done, setDone, streak, xp, hearts, 
                       : `2px solid ${dark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.16)"}`;
 
                     return (
-                      <div key={lessonId} style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 14 }}>
-                        <div role="button" tabIndex={0} onClick={(e) => onNodeClick(lessonId, e)} {...tNode} style={{
-                          ...tNode.style,
-                          width: nodeSize,
-                          height: nodeSize,
-                          borderRadius: 999,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          background: nodeBg,
-                          border,
-                          transform: `translateX(${offset}px)`,
-                          boxShadow: isLocked ? "none" : tNode.style.boxShadow,
-                          cursor: "pointer",
-                          position: "relative",
-                        }}>
-                          <div style={{ fontSize: 22, fontWeight: 900, color: isDone ? "#fff" : "#111" }}>
-                            {isDone ? "✓" : isUnlocked ? "★" : "🔒"}
+                      <div key={lessonId} style={{ position: 'relative', width: '100%', display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 22 }}>
+                        {/* connector line */}
+                        {i > 0 ? (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: -16,
+                              left: '50%',
+                              width: 10,
+                              height: 24,
+                              transform: 'translateX(-50%)',
+                              borderRadius: 999,
+                              background: isDone ? `${u.color}88` : (dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'),
+                              boxShadow: `0 3px 0 ${isDone ? `${u.color}99` : (dark ? 'rgba(0,0,0,0.22)' : 'rgba(0,0,0,0.18)')}`,
+                            }}
+                          />
+                        ) : null}
+
+                        <div
+                          style={{
+                            position: 'relative',
+                            left: offset,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            width: nodeSize + 60,
+                          }}
+                        >
+                          <div role="button" tabIndex={0} onClick={(e) => onNodeClick(lessonId, e)} {...tNode} style={{
+                            ...tNode.style,
+                            width: nodeSize,
+                            height: nodeSize,
+                            borderRadius: 999,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: nodeBg,
+                            border,
+                            boxShadow: isLocked ? "none" : tNode.style.boxShadow,
+                            cursor: "pointer",
+                            position: "relative",
+                          }}>
+                            <div style={{ fontSize: 24, fontWeight: 900, color: isDone ? "#fff" : "#111" }}>
+                              {isDone ? "✓" : isUnlocked ? "★" : <LockIcon size={20} style={{ opacity: 0.65 }} />}
+                            </div>
+
+                            {/* current node indicator: single 3D ring, neutral gray fill */}
+                            {isCurrent ? (
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  inset: -8,
+                                  borderRadius: 999,
+                                  border: `3px solid ${u.color}66`,
+                                  boxShadow: `0 0 0 8px rgba(0,0,0,0.06)`,
+                                }}
+                              />
+                            ) : null}
+
+                            {isUnlocked && !isDone ? (
+                              <div style={{ position: "absolute", inset: -6, borderRadius: 999, border: `2px solid ${u.color}55`, boxShadow: `0 0 0 6px ${u.color}22` }} />
+                            ) : null}
                           </div>
 
-                          {isUnlocked && !isDone ? (
-                            <div style={{ position: "absolute", inset: -6, borderRadius: 999, border: `2px solid ${u.color}55`, boxShadow: `0 0 0 6px ${u.color}22` }} />
-                          ) : null}
+                          <div style={{ marginTop: 8, fontSize: 11, fontWeight: 900, opacity: 0.75, textAlign: 'center', width: nodeSize + 40 }}>
+                            {item.lesson.title}
+                          </div>
                         </div>
-
-                        <div style={{ marginTop: 6, fontSize: 11, fontWeight: 900, opacity: 0.75 }}>{item.lesson.title}</div>
                       </div>
                     );
                   })}
