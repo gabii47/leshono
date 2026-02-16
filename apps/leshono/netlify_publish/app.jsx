@@ -334,122 +334,203 @@ function Confetti({ count = 24, accent = COLORS.accent, anim = "miniConfetti", s
 /* ------------------------------- course data ------------------------------- */
 const mkUnit = (id, title, syriac, color, desc, lessons) => ({ id, title, syriac, color, desc, lessons });
 
-const C = {
-  beginner: {
-    title: "Beginner",
-    syriac: "ܡܫܪܝܐ",
-    color: COLORS.beginner,
-    units: [
-      mkUnit("u1", "Alphabet I & II", "ܐܳܠܰܦܒܶܝܬ̣", COLORS.beginner, "Scripts + first letters", ["u1l1", "u1l2"]),
-      mkUnit("u2", "Alphabet Vocab", "ܠܘܚܐ ܕܡܶܠܶܐ", COLORS.beginner, "Core words to start", ["u2l1"]),
-      mkUnit("u3", "Shlomo (Greetings)", "ܫܠܳܡܳܐ", COLORS.beginner, "Meet & greet", ["u3l1"]),
-      mkUnit("u4", "Iqarto (Family)", "ܥܩܰܪܬܳܐ", COLORS.beginner, "Family basics", ["u4l1"]),
-      mkUnit("u5", "Madrashto (School)", "ܡܰܕܪܰܫܬܳܐ", COLORS.beginner, "Classroom words", ["u5l1"]),
-      mkUnit("u6", "U bayto (House)", "ܘ ܒܰܝܬܐ", COLORS.beginner, "Rooms + objects", ["u6l1"]),
-      mkUnit("u7", "U gushmo (Body)", "ܘ ܓܘܫܡܐ", COLORS.beginner, "Body parts", ["u7l1"]),
-      mkUnit("u8", "Zabno (Numbers)", "ܙܰܒܢܳܐ", COLORS.beginner, "Count + time", ["u8l1"]),
-      mkUnit("u9", "Surgodo (Calendar)", "ܣܘܪܓܳܕܳܐ", COLORS.beginner, "Days + months", ["u9l1"]),
-      mkUnit("u10", "Muklo (Food)", "ܡܘܟܠܳܐ", COLORS.beginner, "Food + ordering", ["u10l1"]),
-      mkUnit("u11", "Jule w Gawne (Clothes)", "ܓܘܠܶܐ ܘܓܰܘܢܶܐ", COLORS.beginner, "Colors + clothes", ["u11l1"]),
-      mkUnit("u12", "Mazracto (Animals)", "ܡܰܙܪܰܩܬܳܐ", COLORS.beginner, "Animals", ["u12l1"]),
-      mkUnit("u13", "Holidays", "ܥܝܕ̈ܐ", COLORS.beginner, "Celebrations", ["u13l1"]),
-      mkUnit("u14", "Su taxtor (Doctor)", "ܣܘ ܬܰܟܬܳܪ", COLORS.beginner, "Health phrases", ["u14l1"]),
-      mkUnit("u15", "Spor", "ܣܦܳܪ", COLORS.beginner, "Sports", ["u15l1"]),
-      mkUnit("u16", "Tlobo w Gworo (Wedding)", "ܛܠܳܒܳܐ ܘܓܘܳܪܳܐ", COLORS.beginner, "Wedding words", ["u16l1"]),
-    ],
-  },
-  intermediate: {
-    title: "Intermediate",
-    syriac: "ܡܶܨܥܳܝܐ",
-    color: COLORS.intermediate,
-    units: [
-      mkUnit("u17", "Travel", "ܫܘܩܳܐ", COLORS.intermediate, "Directions + transport", ["u17l1"]),
-      mkUnit("u18", "Weather", "ܐܰܘܝܪܳܐ", COLORS.intermediate, "Forecast + small talk", ["u18l1"]),
-      mkUnit("u19", "Diaspora", "ܓܳܠܘܬܳܐ", COLORS.intermediate, "Identity abroad", ["u19l1"]),
-      mkUnit("u20", "Verb Conjugation", "ܦܥܳܠ̈ܐ", COLORS.intermediate, "Patterns + practice", ["u20l1"]),
-      mkUnit("u21", "University", "ܝܘܢܝܒܶܪܣܝܛܳܐ", COLORS.intermediate, "Campus life", ["u21l1"]),
-      mkUnit("u22", "Driving", "ܢܗܳܓܳܐ", COLORS.intermediate, "Road words", ["u22l1"]),
-      mkUnit("u23", "Leisure", "ܦܢܳܝܳܐ", COLORS.intermediate, "Free time", ["u23l1"]),
-      mkUnit("u24", "Restaurant", "ܡܛܥܡܳܐ", COLORS.intermediate, "Ordering + paying", ["u24l1"]),
-      mkUnit("u25", "Media", "ܡܶܕܝܳܐ", COLORS.intermediate, "News + internet", ["u25l1"]),
-    ],
-  },
-  advanced: {
-    title: "Advanced",
-    syriac: "ܥܰܡܝܩܳܐ",
-    color: COLORS.advanced,
-    units: [
-      mkUnit("u26", "Folk tales", "ܡܶܫܠ̈ܐ", COLORS.advanced, "Reading stories", ["u26l1"]),
-      mkUnit("u27", "Moral tales", "ܡܘܣܳܪ̈ܐ", COLORS.advanced, "Meanings + morals", ["u27l1"]),
-      mkUnit("u28", "Exile", "ܓܳܠܘܬܳܐ", COLORS.advanced, "Themes + vocabulary", ["u28l1"]),
-      mkUnit("u29", "Wine", "ܚܰܡܪܳܐ", COLORS.advanced, "Traditions", ["u29l1"]),
-      mkUnit("u30", "Social Media", "ܡܶܕܝܳܐ", COLORS.advanced, "Modern life", ["u30l1"]),
-      mkUnit("u31", "Village", "ܩܰܪܝܬܳܐ", COLORS.advanced, "Village words", ["u31l1"]),
-      mkUnit("u32", "Identity", "ܗܘܝܘܬܳܐ", COLORS.advanced, "Culture + identity", ["u32l1"]),
-      mkUnit("u33", "Sayfo", "ܣܰܝܦܳܐ", COLORS.advanced, "History terms", ["u33l1"]),
-      mkUnit("u34", "Arkah", "ܐܰܪܟܳܗ", COLORS.advanced, "Place & memory", ["u34l1"]),
-      mkUnit("u35", "Monasteries", "ܕܰܝܪ̈ܐ", COLORS.advanced, "Heritage", ["u35l1"]),
-      mkUnit("u36", "Naum Faik", "ܢܰܥܘܡ ܦܰܐܝܶܩ", COLORS.advanced, "Figures", ["u36l1"]),
-      mkUnit("u37", "Legal", "ܢܳܡܘܣ̈ܐ", COLORS.advanced, "Legal vocabulary", ["u37l1"]),
-    ],
-  },
-};
+// Course is now loaded from /data/course.json (scraped dataset).
+// We keep this app shell structure, but generate units/lessons/exercises at runtime.
 
-// Minimal lessons (structure matches your spec). Plug real content later.
-const LESSONS = {
-  u1l1: {
-    id: "u1l1",
-    title: "One language, two alphabets",
-    xp: 10,
-    intro: {
-      title: "Two scripts",
-      desc: "Turoyo can be written in Syriac script and in Latin transliteration. You’ll learn both.",
-      vocab: [
-        ["turoyo", "Turoyo", "ܛܘܪܝܳܐ"],
-        ["ktobo", "writing", "ܟܬܳܒܳܐ"],
-      ],
-      dialog: [
-        { a: "A", t: "Shlomo!", s: "ܫܠܳܡܳܐ!" },
-        { a: "B", t: "Shlomo! Kifo at?", s: "ܫܠܳܡܳܐ! ܟܺܝܦܳܐ ܐܰܬ?" },
-      ],
-      grammar: "Syriac script is read right-to-left. Latin transliteration is left-to-right.",
-      culture: "You can switch scripts in settings anytime.",
-    },
-    ex: [
-      { type: "truefalse", q: "Syriac script is read right-to-left.", a: true },
-      { type: "select", q: "Pick the Turoyo greeting:", options: ["Shlomo", "Hello", "Gracias", "Ciao"], a: "Shlomo", al: ["shlomo"] },
-    ],
-  },
-  u1l2: {
-    id: "u1l2",
-    title: "Alphabet: ܐ ܒ ܓ ܕ",
-    xp: 15,
-    intro: {
-      title: "First letters",
-      desc: "Learn and match letters.",
-      vocab: [
-        ["olaf", "A", "ܐ"],
-        ["beṯ", "B", "ܒ"],
-        ["gomal", "G", "ܓ"],
-        ["dolaḏ", "D", "ܕ"],
-      ],
-      grammar: "Match exercises have no Check button.",
-    },
-    ex: [
-      { type: "select", q: "Select ܒ", options: ["ܐ", "ܒ", "ܓ", "ܕ"], a: "ܒ" },
-      { type: "match", pairs: [["olaf", "ܐ"], ["beṯ", "ܒ"], ["gomal", "ܓ"], ["dolaḏ", "ܕ"]] },
-    ],
-  },
-};
+function parseIdToNums(id) {
+  // '1.1.6' -> [1,1,6]
+  return String(id)
+    .split('.')
+    .map((x) => parseInt(x, 10))
+    .filter((n) => Number.isFinite(n));
+}
 
-function flattenCourse(course) {
+function cmpId(a, b) {
+  const A = parseIdToNums(a);
+  const B = parseIdToNums(b);
+  const n = Math.max(A.length, B.length);
+  for (let i = 0; i < n; i++) {
+    const av = A[i] ?? -1;
+    const bv = B[i] ?? -1;
+    if (av !== bv) return av - bv;
+  }
+  return String(a).localeCompare(String(b));
+}
+
+function tierForLessonId(id) {
+  const nums = parseIdToNums(id);
+  const major = nums[0] ?? 1;
+  // Expandable: 1–2 beginner, 3 intermediate, 4–5 advanced.
+  if (major <= 2) return 'beginner';
+  if (major === 3) return 'intermediate';
+  return 'advanced';
+}
+
+function buildCourseFromScraped(scraped) {
+  // scraped format: { lessons:[{id,title,blocks:[...]}], ... }
+  const lessonsById = new Map();
+  (scraped.lessons || []).forEach((l) => lessonsById.set(l.id, l));
+
+  // Determine unit ids as two-part ids like 1.1, 1.2...
+  const allIds = (scraped.lessons || []).map((l) => l.id).sort(cmpId);
+  const unitIds = Array.from(
+    new Set(
+      allIds
+        .map((id) => {
+          const nums = parseIdToNums(id);
+          if (nums.length >= 2) return `${nums[0]}.${nums[1]}`;
+          return null;
+        })
+        .filter(Boolean)
+    )
+  );
+
+  const course = {
+    beginner: { title: 'Beginner', syriac: 'ܡܫܪܝܐ', color: COLORS.beginner, units: [] },
+    intermediate: { title: 'Intermediate', syriac: 'ܡܶܨܥܳܝܐ', color: COLORS.intermediate, units: [] },
+    advanced: { title: 'Advanced', syriac: 'ܥܰܡܝܩܳܐ', color: COLORS.advanced, units: [] },
+  };
+
+  // For each unitId, collect substages (ids starting with unitId + '.')
+  for (const unitId of unitIds) {
+    const sub = allIds.filter((id) => id.startsWith(unitId + '.'));
+    if (!sub.length) continue;
+
+    const unitPage = lessonsById.get(unitId);
+    const unitTitle = unitPage?.title || `Unit ${unitId}`;
+
+    const tierId = tierForLessonId(unitId);
+    const unitColor = course[tierId].color;
+
+    // Description: first non-empty paragraph from unitPage (if present)
+    let desc = '';
+    if (unitPage?.blocks) {
+      const p = unitPage.blocks.find((b) => b.type === 'paragraph' && String(b.text || '').trim());
+      desc = p ? String(p.text).trim() : '';
+    }
+
+    // Syriac label: first Syriac text found in title or blocks
+    let syriac = '';
+    const titleParts = String(unitTitle).split('|').map((x) => x.trim());
+    const maybeSy = titleParts.find((t) => looksSyriac(t));
+    if (maybeSy) syriac = maybeSy;
+
+    const unit = mkUnit(`unit:${unitId}`, titleParts[0] || unitTitle, syriac, unitColor, desc || 'Practice with short steps', sub);
+    course[tierId].units.push(unit);
+  }
+
+  // Build lesson objects for each sub id.
+  const LESSONS = {};
+
+  function takeParagraphs(blocks, limit = 3) {
+    const out = [];
+    for (const b of blocks || []) {
+      if (b.type !== 'paragraph') continue;
+      const t = String(b.text || '').trim();
+      if (!t) continue;
+      // Remove references to video/image instructions
+      if (/video-?clip|watch this video|listen to/i.test(t)) continue;
+      out.push(t);
+      if (out.length >= limit) break;
+    }
+    return out;
+  }
+
+  function extractVocabRows(blocks) {
+    // Prefer table rows like [latin, meaning, syriac]
+    const rows = [];
+    for (const b of blocks || []) {
+      if (b.type !== 'table_row') continue;
+      const cells = b.cells || [];
+      if (!Array.isArray(cells)) continue;
+      const c = cells.map((x) => String(x || '').trim()).filter((x) => x.length);
+      if (c.length < 2) continue;
+      // common headers
+      const joined = c.join(' ').toLowerCase();
+      if (joined === 'vocabulary' || joined === 'exercises') continue;
+
+      // vocab rows are often 3 cells
+      if (c.length >= 3) {
+        const [latin, meaning, syriac] = c;
+        if (!latin || !meaning) continue;
+        // filter header rows
+        if (latin.toLowerCase() === 'name' && meaning.toLowerCase().includes('sound')) continue;
+        rows.push([latin, meaning, syriac]);
+      }
+    }
+    // Dedupe
+    const seen = new Set();
+    return rows.filter((r) => {
+      const k = r.join('|');
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  }
+
+  function generateExercisesFromVocab(vocab, count = 8) {
+    // select exercises: prompt meaning -> choose latin
+    const items = vocab.filter((v) => v[0] && v[1]);
+    const pool = items.map((v) => v[0]);
+    const ex = [];
+    const used = new Set();
+    for (const v of items) {
+      if (ex.length >= count) break;
+      const latin = v[0];
+      const meaning = v[1];
+      if (used.has(latin)) continue;
+      used.add(latin);
+      const opts = [latin];
+      while (opts.length < 4 && opts.length < pool.length) {
+        const cand = pool[Math.floor(Math.random() * pool.length)];
+        if (!opts.includes(cand)) opts.push(cand);
+      }
+      ex.push({ type: 'select', q: `Choose the Turoyo word for: "${meaning}"`, options: shuffle(opts), a: latin, al: [latin] });
+    }
+    return ex;
+  }
+
+  for (const id of allIds) {
+    if (!id.includes('.')) continue;
+    const nums = parseIdToNums(id);
+    if (nums.length < 3) continue; // only sub-stages become lessons
+
+    const src = lessonsById.get(id);
+    const title = src?.title || `Lesson ${id}`;
+    const blocks = src?.blocks || [];
+
+    const paras = takeParagraphs(blocks, 3);
+    const vocab = extractVocabRows(blocks);
+
+    const intro = {
+      title: String(title).split('|')[0].trim(),
+      desc: paras.join(' '),
+      vocab: vocab.slice(0, 20),
+    };
+
+    const ex = generateExercisesFromVocab(vocab, 10);
+
+    LESSONS[id] = {
+      id,
+      title: String(title).split('|')[0].trim(),
+      xp: 10,
+      intro,
+      ex,
+    };
+  }
+
+  return { course, lessons: LESSONS };
+}
+
+function flattenCourse(course, LESSONS) {
   const tiers = ["beginner", "intermediate", "advanced"];
   const flat = [];
   const idx = {};
   for (const tierId of tiers) {
     const tier = course[tierId];
-    tier.units.forEach((u) => {
-      u.lessons.forEach((lessonId) => {
+    (tier.units || []).forEach((u) => {
+      (u.lessons || []).forEach((lessonId) => {
+        // unit.lessons are substage ids from scraped dataset
         const lesson = LESSONS[lessonId] || { id: lessonId, title: "Coming soon", xp: 10, intro: { title: "Coming soon" }, ex: [] };
         const item = { tierId, tier, unit: u, lesson };
         idx[lesson.id] = flat.length;
@@ -1571,7 +1652,31 @@ const BUILD = '3a64e7e';
 function App() {
   useGlobalStyle();
 
-  const { flat, idx } = useMemo(() => flattenCourse(C), []);
+  const [data, setData] = useState({ course: null, lessons: null, error: null });
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch('./data/course.json', { cache: 'no-store' });
+        const scraped = await res.json();
+        const built = buildCourseFromScraped(scraped);
+        if (!alive) return;
+        setData({ course: built.course, lessons: built.lessons, error: null });
+      } catch (e) {
+        if (!alive) return;
+        setData({ course: null, lessons: null, error: String(e) });
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const { flat, idx } = useMemo(() => {
+    if (!data.course || !data.lessons) return { flat: [], idx: {} };
+    return flattenCourse(data.course, data.lessons);
+  }, [data.course, data.lessons]);
 
   const [dark, setDark] = useState(false);
   const [lang, setLang] = useState("en");
@@ -1591,12 +1696,12 @@ function App() {
   const [dailyXp, setDailyXp] = useState(0);
   const [lastDay, setLastDay] = useState(todayKey());
 
-  const [activeLessonId, setActiveLessonId] = useState(flat[0]?.lesson?.id || null);
+  const [activeLessonId, setActiveLessonId] = useState(null);
 
   // persisted state
   useEffect(() => {
     (async () => {
-      const s = await window.storage.get("state_react_v2");
+      const s = await window.storage.get("state_react_v3");
       if (!s) return;
       setDark(!!s.dark);
       setLang(s.lang || "en");
@@ -1608,12 +1713,12 @@ function App() {
       setDailyXp(Number(s.dailyXp || 0));
       setLastDay(s.lastDay || todayKey());
       setPage(s.page || "welcome");
-      setActiveLessonId(s.activeLessonId || flat[0]?.lesson?.id || null);
+      setActiveLessonId(s.activeLessonId || null);
     })();
   }, []);
 
   useEffect(() => {
-    window.storage.set("state_react_v2", { dark, lang, user, xp, streak, done, dailyGoal, dailyXp, lastDay, page, activeLessonId });
+    window.storage.set("state_react_v3", { dark, lang, user, xp, streak, done, dailyGoal, dailyXp, lastDay, page, activeLessonId });
   }, [dark, lang, user, xp, streak, done, dailyGoal, dailyXp, lastDay, page, activeLessonId]);
 
   useEffect(() => {
@@ -1632,7 +1737,14 @@ function App() {
     setPage("lesson");
   };
 
-  const activeItem = activeLessonId ? flat[idx[activeLessonId]] : null;
+  // If data loaded and no active lesson selected yet, pick the first lesson.
+  useEffect(() => {
+    if (!activeLessonId && flat.length) {
+      setActiveLessonId(flat[0].lesson.id);
+    }
+  }, [activeLessonId, flat.length]);
+
+  const activeItem = activeLessonId && idx[activeLessonId] != null ? flat[idx[activeLessonId]] : null;
   const unitColor = activeItem?.unit?.color || COLORS.accent;
 
   const perSectionProgress = useMemo(() => {
@@ -1709,6 +1821,30 @@ function App() {
       </div>
     </div>
   ) : null;
+
+  if (data.error) {
+    return (
+      <div style={{ minHeight: '100vh', background: bg, fontFamily: UI_FONT, padding: 16 }}>
+        {topChrome}
+        <Card dark={dark}>
+          <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 6 }}>Failed to load course</div>
+          <div style={{ fontWeight: 900, opacity: 0.75, lineHeight: 1.35 }}>{String(data.error)}</div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!data.course || !data.lessons) {
+    return (
+      <div style={{ minHeight: '100vh', background: bg, fontFamily: UI_FONT, padding: 16 }}>
+        {topChrome}
+        <Card dark={dark}>
+          <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 6 }}>Loading course…</div>
+          <div style={{ fontWeight: 900, opacity: 0.75, lineHeight: 1.35 }}>Preparing lessons and exercises.</div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: bg, fontFamily: UI_FONT }}>
